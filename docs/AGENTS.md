@@ -28,3 +28,10 @@ If a suggestion violates these rules, do not propose it.
 - `Button` over `onTapGesture`
 - no `UIScreen.main.bounds`
 - no `AnyView` unless required
+
+## Xcode Project Invariants
+
+- the Xcode project must remain in the `lowercase/` folder
+- do not move, rename, or recreate the `.xcodeproj` or `.xcworkspace`
+- do not reorganize project folders unless explicitly requested
+- treat the existing project structure as intentional
