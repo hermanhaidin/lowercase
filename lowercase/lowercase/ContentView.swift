@@ -13,7 +13,28 @@ struct ContentView: View {
             Image(systemName: "globe")
                 .imageScale(.large)
                 .foregroundStyle(.tint)
-            Text("Hello, world!")
+            
+            // Custom pixel font
+            Text("this is a custom pixel font")
+                .font(.custom("MonacoTTF", size: 18, relativeTo: .body))
+            
+            Button {
+                // Do nothing, this is a text
+            } label: {
+                Text("Settings")
+//                    .font(.custom("MonacoTTF", size: 18))
+//                    .monospaced()
+            }
+            .buttonStyle(.glassProminent)
+            
+            Button {
+                // Do nothing, this is a text
+            } label: {
+                Text("Close")
+//                    .font(.custom("MonacoTTF", size: 18))
+//                    .monospaced()
+            }
+            .buttonStyle(.glass)
         }
         .padding()
     }
