@@ -9,9 +9,29 @@ import SwiftUI
 
 @main
 struct lowercaseApp: App {
+    @State private var appState = AppState()
+    @State private var fileStore = FileStore()
+    
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            Group {
+                if fileStore.shouldShowOnboarding {
+                    NavigationStack {
+                        OnboardingView()
+                    }
+                } else {
+                    HomeView()
+                }
+            }
+            .environment(appState)
+            .environment(fileStore)
+            .preferredColorScheme(appState.colorScheme)
+            .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+                fileStore.reload()
+            }
+            .onAppear {
+                fileStore.reload()
+            }
         }
     }
 }
