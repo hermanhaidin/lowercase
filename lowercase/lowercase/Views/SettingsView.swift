@@ -8,16 +8,27 @@
 import SwiftUI
 
 struct SettingsView: View {
+    @Environment(\.dismiss) private var dismiss
+    
     var body: some View {
-        Text("Settings")
-            .navigationTitle("Settings")
-            .navigationBarTitleDisplayMode(.inline)
+        NavigationStack {
+            Text("Settings")
+                .navigationTitle("Settings")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button {
+                            dismiss()
+                        } label: {
+                            Image(systemName: "xmark")
+                        }
+                    }
+                }
+        }
     }
 }
 
 #Preview {
-    NavigationStack {
-        SettingsView()
-    }
+    SettingsView()
 }
 

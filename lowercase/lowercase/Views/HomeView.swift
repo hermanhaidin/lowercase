@@ -10,8 +10,7 @@ struct HomeView: View {
     @Environment(AppState.self) private var appState
     
     @State private var showingNewNoteSheet = false
-    @State private var showingSortMenu = false
-    @State private var navigateToSettings = false
+    @State private var showingSettings = false
     @State private var selectedNote: Note?
     
     var body: some View {
@@ -34,8 +33,8 @@ struct HomeView: View {
                 }
                 
                 ToolbarItem {
-                    NavigationLink(destination: SettingsView()) {
-                        Text("Settings")
+                    Button("Settings") {
+                        showingSettings = true
                     }
                 }
                 
@@ -51,6 +50,9 @@ struct HomeView: View {
             }
             .sheet(isPresented: $showingNewNoteSheet) {
                 NewNoteSheet()
+            }
+            .sheet(isPresented: $showingSettings) {
+                SettingsView()
             }
             .onAppear {
                 fileStore.reload()

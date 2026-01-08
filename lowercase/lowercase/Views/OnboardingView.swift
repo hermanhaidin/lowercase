@@ -15,14 +15,19 @@ struct OnboardingView: View {
             VStack(alignment: .leading, spacing: 24) {
                 Text("your thoughts are yours...")
                     .font(.custom("MonacoTTF", size: 18))
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 
                 Text("lowercase stores notes as files on your device")
                     .font(.custom("MonacoTTF", size: 18))
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 
                 Text("open them anywhere, even offline")
                     .font(.custom("MonacoTTF", size: 18))
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
             
+            Spacer()
+            Spacer()
             Spacer()
             
             NavigationLink(destination: CreateFolderView()) {
