@@ -16,9 +16,7 @@ struct lowercaseApp: App {
         WindowGroup {
             Group {
                 if fileStore.shouldShowOnboarding {
-                    NavigationStack {
-                        OnboardingView()
-                    }
+                    OnboardingView()
                 } else {
                     HomeView()
                 }

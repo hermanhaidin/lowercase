@@ -12,7 +12,13 @@ final class FileStore {
     // MARK: - Properties
     
     /// Current storage root (local or iCloud)
-    var currentRoot: StorageRoot = .local
+    var currentRoot: StorageRoot = .local {
+        didSet {
+            ensureRootDirectoryExists()
+            loadExpandedFolderState()
+            reload()
+        }
+    }
     
     /// Cached folders for current root
     private(set) var folders: [Folder] = []
@@ -22,6 +28,17 @@ final class FileStore {
     
     /// File manager instance
     private let fileManager = FileManager.default
+    
+    /// Background queue for filesystem work (keeps UI thread responsive).
+    private let ioQueue = DispatchQueue(label: "lowercase.filestore.io", qos: .userInitiated)
+    
+    /// Expanded folder state (keyed by folder URL path). Persisted per storage root.
+    var expandedFolderPaths: Set<String> = []
+    
+    private let expandedFolderPathsDefaultsPrefix = "expandedFolderPaths"
+    private var expandedFolderPathsDefaultsKey: String {
+        "\(expandedFolderPathsDefaultsPrefix).\(currentRoot.rawValue)"
+    }
     
     // MARK: - Computed Properties
     
@@ -45,7 +62,7 @@ final class FileStore {
     
     /// Total folder count
     var folderCount: Int {
-        folders.reduce(0) { $0 + 1 + $1.subfolders.count }
+        folders.reduce(0) { $0 + $1.totalFolderCount }
     }
     
     /// Total note count (including orphans)
@@ -58,6 +75,32 @@ final class FileStore {
     init() {
         // Ensure root directory exists
         ensureRootDirectoryExists()
+        loadExpandedFolderState()
+        // Prime in-memory state synchronously to avoid onboarding flash on app launch.
+        reloadSync()
+    }
+    
+    private func loadExpandedFolderState() {
+        let raw = UserDefaults.standard.array(forKey: expandedFolderPathsDefaultsKey) as? [String] ?? []
+        expandedFolderPaths = Set(raw)
+    }
+    
+    private func persistExpandedFolderState() {
+        UserDefaults.standard.set(Array(expandedFolderPaths), forKey: expandedFolderPathsDefaultsKey)
+    }
+    
+    func isFolderExpanded(_ folderURL: URL) -> Bool {
+        expandedFolderPaths.contains(folderURL.path)
+    }
+    
+    func toggleFolderExpansion(_ folderURL: URL) {
+        let key = folderURL.path
+        if expandedFolderPaths.contains(key) {
+            expandedFolderPaths.remove(key)
+        } else {
+            expandedFolderPaths.insert(key)
+        }
+        persistExpandedFolderState()
     }
     
     // MARK: - Directory Setup
@@ -71,42 +114,11 @@ final class FileStore {
         }
     }
     
-    /// Check if any folders exist in current root
-    var hasAnyFolders: Bool {
-        guard let rootURL else { return false }
-        
-        let contents = (try? fileManager.contentsOfDirectory(
-            at: rootURL,
-            includingPropertiesForKeys: [.isDirectoryKey],
-            options: [.skipsHiddenFiles]
-        )) ?? []
-        
-        return contents.contains { url in
-            (try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true
-        }
-    }
-    
-    /// Check if any content (folders or notes) exists in current root
-    var hasAnyContent: Bool {
-        guard let rootURL else { return false }
-        
-        let contents = (try? fileManager.contentsOfDirectory(
-            at: rootURL,
-            includingPropertiesForKeys: [.isDirectoryKey],
-            options: [.skipsHiddenFiles]
-        )) ?? []
-        
-        // Has folders OR has .md files
-        return contents.contains { url in
-            let isDirectory = (try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true
-            let isMarkdown = url.pathExtension.lowercased() == "md"
-            return isDirectory || isMarkdown
-        }
-    }
-    
     /// Whether to show onboarding (no content exists)
     var shouldShowOnboarding: Bool {
-        !hasAnyContent
+        // Important: this must depend on observable properties so SwiftUI re-renders
+        // immediately after `reload()` mutates folders/notes.
+        folders.isEmpty && orphanNotes.isEmpty
     }
     
     // MARK: - Load Data
@@ -119,12 +131,39 @@ final class FileStore {
             return
         }
         
-        folders = loadFolders(at: rootURL, depth: 0)
-        orphanNotes = loadNotes(at: rootURL, isOrphan: true)
+        // Do filesystem traversal off the main thread; publish results on main.
+        let fm = fileManager
+        let expanded = expandedFolderPaths
+        ioQueue.async { [weak self] in
+            let loadedFolders = FileStore.loadFolders(using: fm, at: rootURL, depth: 0, expandedFolderPaths: expanded)
+            let loadedOrphans = FileStore.loadNotes(using: fm, at: rootURL, isOrphan: true)
+            DispatchQueue.main.async {
+                guard let self else { return }
+                self.folders = loadedFolders
+                self.orphanNotes = loadedOrphans
+            }
+        }
+    }
+    
+    /// Synchronous reload (used only during initialization to avoid a UI flash).
+    private func reloadSync() {
+        guard let rootURL else {
+            folders = []
+            orphanNotes = []
+            return
+        }
+        
+        folders = FileStore.loadFolders(using: fileManager, at: rootURL, depth: 0, expandedFolderPaths: expandedFolderPaths)
+        orphanNotes = FileStore.loadNotes(using: fileManager, at: rootURL, isOrphan: true)
     }
     
     /// Load folders at a given URL
-    private func loadFolders(at url: URL, depth: Int) -> [Folder] {
+    private static func loadFolders(
+        using fileManager: FileManager,
+        at url: URL,
+        depth: Int,
+        expandedFolderPaths: Set<String>
+    ) -> [Folder] {
         guard let contents = try? fileManager.contentsOfDirectory(
             at: url,
             includingPropertiesForKeys: [.isDirectoryKey, .contentModificationDateKey, .creationDateKey],
@@ -137,8 +176,13 @@ final class FileStore {
                 return nil
             }
             
-            let notes = loadNotes(at: itemURL, isOrphan: false)
-            let subfolders = loadFolders(at: itemURL, depth: depth + 1)
+            let notes = loadNotes(using: fileManager, at: itemURL, isOrphan: false)
+            let subfolders = loadFolders(
+                using: fileManager,
+                at: itemURL,
+                depth: depth + 1,
+                expandedFolderPaths: expandedFolderPaths
+            )
             
             return Folder(
                 url: itemURL,
@@ -147,13 +191,13 @@ final class FileStore {
                 modifiedDate: resourceValues.contentModificationDate ?? Date(),
                 createdDate: resourceValues.creationDate ?? Date(),
                 depth: depth,
-                isExpanded: false
+                isExpanded: expandedFolderPaths.contains(itemURL.path)
             )
         }
     }
     
     /// Load notes at a given URL
-    private func loadNotes(at url: URL, isOrphan: Bool) -> [Note] {
+    private static func loadNotes(using fileManager: FileManager, at url: URL, isOrphan: Bool) -> [Note] {
         guard let contents = try? fileManager.contentsOfDirectory(
             at: url,
             includingPropertiesForKeys: [.isDirectoryKey, .contentModificationDateKey, .creationDateKey],
@@ -187,6 +231,18 @@ final class FileStore {
     /// Write content to a note
     func writeContent(_ content: String, to url: URL) throws {
         try content.write(to: url, atomically: true, encoding: .utf8)
+    }
+    
+    /// Write content off the main thread (prevents keyboard/tap lag on larger files).
+    func writeContentAsync(_ content: String, to url: URL) {
+        let contentCopy = content
+        let fm = fileManager
+        ioQueue.async {
+            // Avoid throwing across threads; best-effort write.
+            // Use atomic write to keep the file consistent.
+            try? contentCopy.write(to: url, atomically: true, encoding: .utf8)
+            _ = fm // keep for symmetry/future hooks; no-op
+        }
     }
     
     // MARK: - Create Operations
@@ -363,15 +419,6 @@ final class FileStore {
             return notes.sorted { $0.createdDate > $1.createdDate }
         case .createdAsc:
             return notes.sorted { $0.createdDate < $1.createdDate }
-        }
-    }
-    
-    // MARK: - Folder Expansion State
-    
-    /// Toggle folder expansion
-    func toggleFolder(_ folder: Folder) {
-        if let index = folders.firstIndex(where: { $0.id == folder.id }) {
-            folders[index].isExpanded.toggle()
         }
     }
     

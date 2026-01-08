@@ -45,18 +45,10 @@ struct OnboardingView: View {
             }
             .navigationDestination(for: String.self) { destination in
                 if destination == "createFolder" {
-                    CreateFolderView(
-                        createNoteAfterFolder: true,
-                        onNoteCreated: { note in
-                            // Pop back and navigate to editor
-                            navigationPath.removeLast()
-                            navigationPath.append(note)
-                        }
-                    )
+                    CreateFolderView()
+                    // After folder creation, fileStore.shouldShowOnboarding becomes false,
+                    // which swaps the root view to HomeView automatically
                 }
-            }
-            .navigationDestination(for: Note.self) { note in
-                EditorView(note: note)
             }
         }
     }

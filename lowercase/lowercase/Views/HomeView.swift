@@ -14,6 +14,27 @@ struct HomeView: View {
     @State private var showingSettings = false
     @State private var pendingNoteForNavigation: Note?
     
+    // Context menu state
+    @State private var itemToRename: URL?
+    @State private var itemToMove: URL?
+    @State private var itemToDelete: URL?
+    @State private var isRenamingFolder = false
+    @State private var newName = ""
+    @State private var showingRenameAlert = false
+    @State private var showingDeleteConfirmation = false
+    
+    private struct MoveTarget: Identifiable {
+        let id: URL
+        let url: URL
+        
+        init(_ url: URL) {
+            self.id = url
+            self.url = url
+        }
+    }
+    
+    @State private var moveTarget: MoveTarget?
+    
     var body: some View {
         NavigationStack(path: $navigationPath) {
             ZStack(alignment: .bottomTrailing) {
@@ -77,8 +98,127 @@ struct HomeView: View {
             .sheet(isPresented: $showingSettings) {
                 SettingsView()
             }
+            .sheet(item: $moveTarget) { target in
+                MoveToSheet(noteURL: target.url)
+            }
+            .alert("Rename", isPresented: $showingRenameAlert) {
+                TextField("Name", text: $newName)
+                Button("Cancel", role: .cancel) {
+                    itemToRename = nil
+                }
+                Button("Rename") {
+                    performRename()
+                }
+            }
+            .confirmationDialog(
+                "Delete",
+                isPresented: $showingDeleteConfirmation,
+                titleVisibility: .visible
+            ) {
+                Button("Delete", role: .destructive) {
+                    performDelete()
+                }
+                Button("Cancel", role: .cancel) {
+                    itemToDelete = nil
+                }
+            } message: {
+                Text("This action cannot be undone.")
+            }
             .onAppear {
                 fileStore.reload()
+            }
+        }
+    }
+    
+    // MARK: - Context Menu Actions
+    
+    private func performRename() {
+        guard let url = itemToRename else { return }
+        let trimmed = newName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        
+        do {
+            if isRenamingFolder {
+                _ = try fileStore.renameFolder(at: url, to: trimmed)
+            } else {
+                _ = try fileStore.renameNote(at: url, to: trimmed)
+            }
+        } catch {
+            print("Rename failed: \(error)")
+        }
+        
+        itemToRename = nil
+        newName = ""
+    }
+    
+    private func performDelete() {
+        guard let url = itemToDelete else { return }
+        
+        do {
+            // Check if it's a directory
+            var isDirectory: ObjCBool = false
+            if FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory) {
+                if isDirectory.boolValue {
+                    try fileStore.deleteFolder(at: url)
+                } else {
+                    try fileStore.deleteNote(at: url)
+                }
+            }
+        } catch {
+            print("Delete failed: \(error)")
+        }
+        
+        itemToDelete = nil
+    }
+    
+    // MARK: - Context Menu Builders
+    
+    func folderContextMenu(for folder: Folder) -> some View {
+        Group {
+            Button {
+                itemToRename = folder.url
+                isRenamingFolder = true
+                newName = folder.name
+                showingRenameAlert = true
+            } label: {
+                Label("Rename", systemImage: "pencil")
+            }
+            
+            Divider()
+            
+            Button(role: .destructive) {
+                itemToDelete = folder.url
+                showingDeleteConfirmation = true
+            } label: {
+                Label("Delete", systemImage: "trash")
+            }
+        }
+    }
+    
+    func noteContextMenu(for note: Note) -> some View {
+        Group {
+            Button {
+                itemToRename = note.url
+                isRenamingFolder = false
+                newName = note.filename
+                showingRenameAlert = true
+            } label: {
+                Label("Rename", systemImage: "pencil")
+            }
+            
+            Button {
+                moveTarget = MoveTarget(note.url)
+            } label: {
+                Label("Move to...", systemImage: "folder")
+            }
+            
+            Divider()
+            
+            Button(role: .destructive) {
+                itemToDelete = note.url
+                showingDeleteConfirmation = true
+            } label: {
+                Label("Delete", systemImage: "trash")
             }
         }
     }
@@ -181,6 +321,31 @@ struct HomeView: View {
                     }
                     .padding()
                 }
+                .contextMenu {
+                    Button {
+                        itemToRename = note.url
+                        isRenamingFolder = false
+                        newName = note.filename
+                        showingRenameAlert = true
+                    } label: {
+                        Label("Rename", systemImage: "pencil")
+                    }
+                    
+                    Button {
+                        moveTarget = MoveTarget(note.url)
+                    } label: {
+                        Label("Move to...", systemImage: "folder")
+                    }
+                    
+                    Divider()
+                    
+                    Button(role: .destructive) {
+                        itemToDelete = note.url
+                        showingDeleteConfirmation = true
+                    } label: {
+                        Label("Delete", systemImage: "trash")
+                    }
+                }
             }
         }
         .background(Color(.secondarySystemGroupedBackground))
@@ -270,16 +435,24 @@ struct FolderSection: View {
     @Environment(FileStore.self) private var fileStore
     let folder: Folder
     
+    // Context menu state
+    @State private var showingRenameAlert = false
+    @State private var showingDeleteConfirmation = false
+    @State private var newName = ""
+    @State private var noteToRename: Note?
+    @State private var noteToMove: Note?
+    @State private var noteToDelete: Note?
+    
     var body: some View {
         VStack(spacing: 0) {
             // Folder header
             Button {
                 withAnimation(.easeInOut(duration: 0.2)) {
-                    fileStore.toggleFolder(folder)
+                    fileStore.toggleFolderExpansion(folder.url)
                 }
             } label: {
                 HStack {
-                    Image(systemName: folder.isExpanded ? "chevron.down" : "chevron.right")
+                    Image(systemName: fileStore.isFolderExpanded(folder.url) ? "chevron.down" : "chevron.right")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .frame(width: 16)
@@ -294,9 +467,25 @@ struct FolderSection: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            .contextMenu {
+                Button {
+                    newName = folder.name
+                    showingRenameAlert = true
+                } label: {
+                    Label("Rename", systemImage: "pencil")
+                }
+                
+                Divider()
+                
+                Button(role: .destructive) {
+                    showingDeleteConfirmation = true
+                } label: {
+                    Label("Delete", systemImage: "trash")
+                }
+            }
             
             // Expanded content
-            if folder.isExpanded {
+            if fileStore.isFolderExpanded(folder.url) {
                 VStack(spacing: 0) {
                     // Notes in this folder
                     ForEach(folder.notes) { note in
@@ -315,6 +504,30 @@ struct FolderSection: View {
                             .padding()
                             .padding(.leading, 24)
                         }
+                        .contextMenu {
+                            Button {
+                                noteToRename = note
+                                newName = note.filename
+                                showingRenameAlert = true
+                            } label: {
+                                Label("Rename", systemImage: "pencil")
+                            }
+                            
+                            Button {
+                                noteToMove = note
+                            } label: {
+                                Label("Move to...", systemImage: "folder")
+                            }
+                            
+                            Divider()
+                            
+                            Button(role: .destructive) {
+                                noteToDelete = note
+                                showingDeleteConfirmation = true
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                        }
                     }
                     
                     // Subfolders
@@ -326,6 +539,58 @@ struct FolderSection: View {
         }
         .background(Color(.secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 12))
+        .alert("Rename", isPresented: $showingRenameAlert) {
+            TextField("Name", text: $newName)
+            Button("Cancel", role: .cancel) {
+                noteToRename = nil
+            }
+            Button("Rename") {
+                performRename()
+            }
+        }
+        .confirmationDialog("Delete", isPresented: $showingDeleteConfirmation, titleVisibility: .visible) {
+            Button("Delete", role: .destructive) {
+                performDelete()
+            }
+            Button("Cancel", role: .cancel) {
+                noteToDelete = nil
+            }
+        } message: {
+            Text("This action cannot be undone.")
+        }
+        .sheet(item: $noteToMove) { note in
+            MoveToSheet(noteURL: note.url)
+        }
+    }
+    
+    private func performRename() {
+        let trimmed = newName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        
+        do {
+            if let note = noteToRename {
+                _ = try fileStore.renameNote(at: note.url, to: trimmed)
+                noteToRename = nil
+            } else {
+                _ = try fileStore.renameFolder(at: folder.url, to: trimmed)
+            }
+        } catch {
+            print("Rename failed: \(error)")
+        }
+        newName = ""
+    }
+    
+    private func performDelete() {
+        do {
+            if let note = noteToDelete {
+                try fileStore.deleteNote(at: note.url)
+                noteToDelete = nil
+            } else {
+                try fileStore.deleteFolder(at: folder.url)
+            }
+        } catch {
+            print("Delete failed: \(error)")
+        }
     }
 }
 
@@ -336,18 +601,24 @@ struct SubfolderSection: View {
     let folder: Folder
     let depth: Int
     
-    @State private var isExpanded = false
+    // Context menu state
+    @State private var showingRenameAlert = false
+    @State private var showingDeleteConfirmation = false
+    @State private var newName = ""
+    @State private var noteToRename: Note?
+    @State private var noteToMove: Note?
+    @State private var noteToDelete: Note?
     
     var body: some View {
         VStack(spacing: 0) {
             // Subfolder header
             Button {
                 withAnimation(.easeInOut(duration: 0.2)) {
-                    isExpanded.toggle()
+                    fileStore.toggleFolderExpansion(folder.url)
                 }
             } label: {
                 HStack {
-                    Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
+                    Image(systemName: fileStore.isFolderExpanded(folder.url) ? "chevron.down" : "chevron.right")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .frame(width: 16)
@@ -363,9 +634,25 @@ struct SubfolderSection: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            .contextMenu {
+                Button {
+                    newName = folder.name
+                    showingRenameAlert = true
+                } label: {
+                    Label("Rename", systemImage: "pencil")
+                }
+                
+                Divider()
+                
+                Button(role: .destructive) {
+                    showingDeleteConfirmation = true
+                } label: {
+                    Label("Delete", systemImage: "trash")
+                }
+            }
             
             // Expanded content
-            if isExpanded {
+            if fileStore.isFolderExpanded(folder.url) {
                 // Notes
                 ForEach(folder.notes) { note in
                     NavigationLink(value: note) {
@@ -383,6 +670,30 @@ struct SubfolderSection: View {
                         .padding()
                         .padding(.leading, CGFloat(depth + 1) * 24)
                     }
+                    .contextMenu {
+                        Button {
+                            noteToRename = note
+                            newName = note.filename
+                            showingRenameAlert = true
+                        } label: {
+                            Label("Rename", systemImage: "pencil")
+                        }
+                        
+                        Button {
+                            noteToMove = note
+                        } label: {
+                            Label("Move to...", systemImage: "folder")
+                        }
+                        
+                        Divider()
+                        
+                        Button(role: .destructive) {
+                            noteToDelete = note
+                            showingDeleteConfirmation = true
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+                    }
                 }
                 
                 // Nested subfolders
@@ -390,6 +701,58 @@ struct SubfolderSection: View {
                     SubfolderSection(folder: subfolder, depth: depth + 1)
                 }
             }
+        }
+        .alert("Rename", isPresented: $showingRenameAlert) {
+            TextField("Name", text: $newName)
+            Button("Cancel", role: .cancel) {
+                noteToRename = nil
+            }
+            Button("Rename") {
+                performRename()
+            }
+        }
+        .confirmationDialog("Delete", isPresented: $showingDeleteConfirmation, titleVisibility: .visible) {
+            Button("Delete", role: .destructive) {
+                performDelete()
+            }
+            Button("Cancel", role: .cancel) {
+                noteToDelete = nil
+            }
+        } message: {
+            Text("This action cannot be undone.")
+        }
+        .sheet(item: $noteToMove) { note in
+            MoveToSheet(noteURL: note.url)
+        }
+    }
+    
+    private func performRename() {
+        let trimmed = newName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        
+        do {
+            if let note = noteToRename {
+                _ = try fileStore.renameNote(at: note.url, to: trimmed)
+                noteToRename = nil
+            } else {
+                _ = try fileStore.renameFolder(at: folder.url, to: trimmed)
+            }
+        } catch {
+            print("Rename failed: \(error)")
+        }
+        newName = ""
+    }
+    
+    private func performDelete() {
+        do {
+            if let note = noteToDelete {
+                try fileStore.deleteNote(at: note.url)
+                noteToDelete = nil
+            } else {
+                try fileStore.deleteFolder(at: folder.url)
+            }
+        } catch {
+            print("Delete failed: \(error)")
         }
     }
 }

@@ -14,6 +14,7 @@ struct EditorView: View {
     
     @State private var content: String = ""
     @State private var filename: String = ""
+    @State private var noteURL: URL
     @State private var isEditingFilename = false
     @State private var showingMoreMenu = false
     @State private var showingMoveSheet = false
@@ -25,6 +26,14 @@ struct EditorView: View {
     
     // Auto-save debounce
     @State private var saveTask: Task<Void, Never>?
+    
+    // Prevent double-finalization (e.g. custom Back triggers dismiss, then onDisappear fires)
+    @State private var didFinalizeExit = false
+    
+    init(note: Note) {
+        self.note = note
+        _noteURL = State(initialValue: note.url)
+    }
     
     var body: some View {
         TextEditor(text: $content)
@@ -96,16 +105,21 @@ struct EditorView: View {
                 Text("This action cannot be undone.")
             }
             .sheet(isPresented: $showingMoveSheet) {
-                MoveToSheet(noteURL: note.url)
+                MoveToSheet(
+                    noteURL: noteURL,
+                    onMoved: { newURL in
+                        // Update the editor to keep saving to the moved location (prevents "copy" behavior)
+                        noteURL = newURL
+                        filename = newURL.deletingPathExtension().lastPathComponent
+                        fileStore.reload()
+                    }
+                )
             }
             .onAppear {
                 loadContent()
             }
             .onDisappear {
-                // Cancel any pending save
-                saveTask?.cancel()
-                // Final save
-                saveContent()
+                finalizeExitIfNeeded()
             }
     }
     
@@ -141,23 +155,27 @@ struct EditorView: View {
     // MARK: - Content Management
     
     private func loadContent() {
-        content = fileStore.readContent(of: note)
-        filename = note.filename
+        // Load from the current URL (note can be moved/renamed while editor is open).
+        content = (try? String(contentsOf: noteURL, encoding: .utf8)) ?? ""
+        filename = noteURL.deletingPathExtension().lastPathComponent
     }
     
     private func saveContent() {
         guard let url = currentNoteURL else { return }
-        try? fileStore.writeContent(content, to: url)
+        // Avoid blocking the main thread (can manifest as keyboard/tap delays).
+        fileStore.writeContentAsync(content, to: url)
     }
     
     private var currentNoteURL: URL? {
         // If renamed, use new URL; otherwise use original
-        if filename != note.filename {
-            return note.url.deletingLastPathComponent()
+        let baseDir = noteURL.deletingLastPathComponent()
+        let baseFilename = noteURL.deletingPathExtension().lastPathComponent
+        if filename != baseFilename {
+            return baseDir
                 .appendingPathComponent(filename)
                 .appendingPathExtension("md")
         }
-        return note.url
+        return noteURL
     }
     
     // MARK: - Auto-Save
@@ -177,17 +195,25 @@ struct EditorView: View {
     // MARK: - Back Navigation
     
     private func handleBackNavigation() {
-        // Cancel pending save
+        finalizeExitIfNeeded()
+        dismiss()
+    }
+    
+    private func finalizeExitIfNeeded() {
+        guard !didFinalizeExit else { return }
+        didFinalizeExit = true
+        
+        // Cancel pending save and flush final state synchronously.
         saveTask?.cancel()
         
-        // Check if should auto-delete
         if shouldAutoDelete {
-            try? fileStore.deleteNote(at: note.url)
+            // Delete the note and do NOT recreate it by saving on disappear.
+            try? fileStore.deleteNote(at: currentNoteURL ?? noteURL)
         } else {
             saveContent()
+            // Ensure HomeView reflects latest note list immediately when navigating back.
+            fileStore.reload()
         }
-        
-        dismiss()
     }
     
     private var shouldAutoDelete: Bool {
@@ -195,9 +221,16 @@ struct EditorView: View {
         
         // Only delete if content is empty and filename is unchanged (default name)
         let isEmpty = content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        let hasDefaultName = note.hasDefaultFilename && filename == note.filename
+        let baseFilename = noteURL.deletingPathExtension().lastPathComponent
+        let hasDefaultName = (baseFilename.starts(with: "untitled") || isDateFilename(baseFilename))
+            && filename == baseFilename
         
         return isEmpty && hasDefaultName
+    }
+    
+    private func isDateFilename(_ name: String) -> Bool {
+        let pattern = #"^\d{4}-\d{2}-\d{2}$"#
+        return name.range(of: pattern, options: .regularExpression) != nil
     }
     
     // MARK: - Actions
@@ -210,7 +243,8 @@ struct EditorView: View {
             // Save current content first
             saveContent()
             // Rename the file
-            _ = try fileStore.renameNote(at: note.url, to: trimmed)
+            let newURL = try fileStore.renameNote(at: noteURL, to: trimmed)
+            noteURL = newURL
             filename = trimmed
         } catch {
             // Handle error - could show alert
@@ -220,7 +254,8 @@ struct EditorView: View {
     
     private func deleteNote() {
         saveTask?.cancel()
-        try? fileStore.deleteNote(at: note.url)
+        didFinalizeExit = true
+        try? fileStore.deleteNote(at: currentNoteURL ?? noteURL)
         dismiss()
     }
 }

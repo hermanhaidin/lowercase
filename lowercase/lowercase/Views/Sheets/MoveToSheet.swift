@@ -11,6 +11,9 @@ struct MoveToSheet: View {
     
     let noteURL: URL
     
+    /// Called after a successful move with the new file URL.
+    var onMoved: ((URL) -> Void)? = nil
+    
     @State private var isCreatingFolder = false
     @State private var newFolderName = ""
     
@@ -99,7 +102,8 @@ struct MoveToSheet: View {
         
         do {
             let folderURL = try fileStore.createFolder(named: trimmed)
-            _ = try fileStore.moveNote(at: noteURL, to: folderURL)
+            let newURL = try fileStore.moveNote(at: noteURL, to: folderURL)
+            onMoved?(newURL)
             dismiss()
         } catch {
             print("Failed to create folder/move note: \(error)")
@@ -111,7 +115,8 @@ struct MoveToSheet: View {
     
     private func moveNoteToFolder(_ folder: Folder) {
         do {
-            _ = try fileStore.moveNote(at: noteURL, to: folder.url)
+            let newURL = try fileStore.moveNote(at: noteURL, to: folder.url)
+            onMoved?(newURL)
             dismiss()
         } catch {
             print("Failed to move note: \(error)")

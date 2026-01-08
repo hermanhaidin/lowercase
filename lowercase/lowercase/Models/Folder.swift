@@ -43,6 +43,11 @@ struct Folder: Identifiable, Hashable {
         notes.count + subfolders.reduce(0) { $0 + $1.totalNoteCount }
     }
     
+    /// Total folder count including this folder and all nested subfolders
+    var totalFolderCount: Int {
+        1 + subfolders.reduce(0) { $0 + $1.totalFolderCount }
+    }
+    
     /// Whether this is a "daily" folder (for special filename handling)
     var isDaily: Bool {
         name.localizedCaseInsensitiveContains("daily")
