@@ -1,16 +1,15 @@
 //
-//  NewNoteSheet.swift
+//  MoveToSheet.swift
 //  lowercase
 //
 
 import SwiftUI
 
-struct NewNoteSheet: View {
+struct MoveToSheet: View {
     @Environment(FileStore.self) private var fileStore
     @Environment(\.dismiss) private var dismiss
     
-    /// Called when a note is created - HomeView will handle navigation to Editor
-    var onNoteCreated: ((Note) -> Void)?
+    let noteURL: URL
     
     @State private var isCreatingFolder = false
     @State private var newFolderName = ""
@@ -19,14 +18,42 @@ struct NewNoteSheet: View {
     
     var body: some View {
         NavigationStack {
-            Group {
-                if fileStore.folders.isEmpty {
-                    noFoldersView
-                } else {
-                    folderListView
+            ScrollView {
+                LazyVStack(spacing: 8) {
+                    // New folder button at top
+                    if isCreatingFolder {
+                        folderNameInput
+                            .padding(.horizontal)
+                    } else {
+                        Button {
+                            isCreatingFolder = true
+                            isFolderNameFocused = true
+                        } label: {
+                            HStack {
+                                Text("+ new folder")
+                                    .font(.custom("MonacoTTF", size: 16))
+                                    .foregroundStyle(.blue)
+                                Spacer()
+                            }
+                            .padding()
+                        }
+                    }
+                    
+                    // Folder list
+                    ForEach(fileStore.folders) { folder in
+                        MoveFolderPickerRow(
+                            folder: folder,
+                            depth: 0,
+                            currentNoteURL: noteURL,
+                            onSelect: { selectedFolder in
+                                moveNoteToFolder(selectedFolder)
+                            }
+                        )
+                    }
                 }
+                .padding(.horizontal)
             }
-            .navigationTitle("New Note")
+            .navigationTitle("Move to...")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -37,73 +64,6 @@ struct NewNoteSheet: View {
                     }
                 }
             }
-        }
-    }
-    
-    // MARK: - No Folders View
-    
-    private var noFoldersView: some View {
-        VStack(spacing: 24) {
-            Spacer()
-            
-            Text("create a folder first")
-                .font(.custom("MonacoTTF", size: 18))
-                .foregroundStyle(.secondary)
-            
-            if isCreatingFolder {
-                folderNameInput
-            } else {
-                Button {
-                    isCreatingFolder = true
-                    isFolderNameFocused = true
-                } label: {
-                    Text("+ new folder")
-                        .font(.custom("MonacoTTF", size: 16))
-                }
-                .buttonStyle(.borderedProminent)
-            }
-            
-            Spacer()
-        }
-        .padding()
-    }
-    
-    // MARK: - Folder List View
-    
-    private var folderListView: some View {
-        ScrollView {
-            LazyVStack(spacing: 8) {
-                // New folder button at top
-                if isCreatingFolder {
-                    folderNameInput
-                        .padding(.horizontal)
-                } else {
-                    Button {
-                        isCreatingFolder = true
-                        isFolderNameFocused = true
-                    } label: {
-                        HStack {
-                            Text("+ new folder")
-                                .font(.custom("MonacoTTF", size: 16))
-                                .foregroundStyle(.blue)
-                            Spacer()
-                        }
-                        .padding()
-                    }
-                }
-                
-                // Folder list
-                ForEach(fileStore.folders) { folder in
-                    FolderPickerRow(
-                        folder: folder,
-                        depth: 0,
-                        onSelect: { selectedFolder in
-                            createNoteInFolder(selectedFolder)
-                        }
-                    )
-                }
-            }
-            .padding(.horizontal)
         }
     }
     
@@ -118,11 +78,11 @@ struct NewNoteSheet: View {
                 .textInputAutocapitalization(.never)
                 .focused($isFolderNameFocused)
                 .onSubmit {
-                    createFolderAndNote()
+                    createFolderAndMove()
                 }
             
             Button("Create") {
-                createFolderAndNote()
+                createFolderAndMove()
             }
             .disabled(newFolderName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
         }
@@ -133,40 +93,44 @@ struct NewNoteSheet: View {
     
     // MARK: - Actions
     
-    private func createFolderAndNote() {
+    private func createFolderAndMove() {
         let trimmed = newFolderName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
         
         do {
             let folderURL = try fileStore.createFolder(named: trimmed)
-            let note = try fileStore.createNote(in: folderURL)
-            onNoteCreated?(note)
+            _ = try fileStore.moveNote(at: noteURL, to: folderURL)
             dismiss()
         } catch {
-            print("Failed to create folder/note: \(error)")
+            print("Failed to create folder/move note: \(error)")
         }
         
         isCreatingFolder = false
         newFolderName = ""
     }
     
-    private func createNoteInFolder(_ folder: Folder) {
+    private func moveNoteToFolder(_ folder: Folder) {
         do {
-            let note = try fileStore.createNote(in: folder.url)
-            onNoteCreated?(note)
+            _ = try fileStore.moveNote(at: noteURL, to: folder.url)
             dismiss()
         } catch {
-            print("Failed to create note: \(error)")
+            print("Failed to move note: \(error)")
         }
     }
 }
 
-// MARK: - Folder Picker Row
+// MARK: - Move Folder Picker Row
 
-struct FolderPickerRow: View {
+struct MoveFolderPickerRow: View {
     let folder: Folder
     let depth: Int
+    let currentNoteURL: URL
     let onSelect: (Folder) -> Void
+    
+    /// Check if this folder contains the note being moved
+    private var containsCurrentNote: Bool {
+        folder.url == currentNoteURL.deletingLastPathComponent()
+    }
     
     var body: some View {
         VStack(spacing: 0) {
@@ -177,7 +141,13 @@ struct FolderPickerRow: View {
                 HStack {
                     Text(folder.name)
                         .font(.custom("MonacoTTF", size: 16))
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(containsCurrentNote ? .secondary : .primary)
+                    
+                    if containsCurrentNote {
+                        Text("(current)")
+                            .font(.custom("MonacoTTF", size: 12))
+                            .foregroundStyle(.tertiary)
+                    }
                     
                     Spacer()
                     
@@ -190,13 +160,15 @@ struct FolderPickerRow: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            .disabled(containsCurrentNote)
             
-            // Subfolders (always show expanded)
+            // Subfolders
             if !folder.subfolders.isEmpty {
                 ForEach(folder.subfolders) { subfolder in
-                    FolderPickerRow(
+                    MoveFolderPickerRow(
                         folder: subfolder,
                         depth: depth + 1,
+                        currentNoteURL: currentNoteURL,
                         onSelect: onSelect
                     )
                 }
@@ -208,6 +180,6 @@ struct FolderPickerRow: View {
 }
 
 #Preview {
-    NewNoteSheet()
+    MoveToSheet(noteURL: URL(fileURLWithPath: "/test/daily/note.md"))
         .environment(FileStore())
 }

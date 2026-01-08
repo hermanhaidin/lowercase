@@ -9,12 +9,13 @@ struct HomeView: View {
     @Environment(FileStore.self) private var fileStore
     @Environment(AppState.self) private var appState
     
+    @State private var navigationPath = NavigationPath()
     @State private var showingNewNoteSheet = false
     @State private var showingSettings = false
-    @State private var selectedNote: Note?
+    @State private var pendingNoteForNavigation: Note?
     
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $navigationPath) {
             ZStack(alignment: .bottomTrailing) {
                 if fileStore.folders.isEmpty && fileStore.orphanNotes.isEmpty {
                     emptyState
@@ -48,8 +49,30 @@ struct HomeView: View {
             .navigationDestination(for: Note.self) { note in
                 EditorView(note: note)
             }
+            .navigationDestination(for: String.self) { destination in
+                if destination == "createFolder" {
+                    CreateFolderView(
+                        createNoteAfterFolder: true,
+                        onNoteCreated: { note in
+                            // Pop CreateFolderView and push Editor
+                            navigationPath.removeLast()
+                            navigationPath.append(note)
+                        }
+                    )
+                }
+            }
             .sheet(isPresented: $showingNewNoteSheet) {
-                NewNoteSheet()
+                NewNoteSheet(onNoteCreated: { note in
+                    // After sheet dismisses, navigate to editor
+                    pendingNoteForNavigation = note
+                })
+            }
+            .onChange(of: showingNewNoteSheet) { wasShowing, isShowing in
+                // When sheet dismisses, navigate to the created note
+                if wasShowing && !isShowing, let note = pendingNoteForNavigation {
+                    navigationPath.append(note)
+                    pendingNoteForNavigation = nil
+                }
             }
             .sheet(isPresented: $showingSettings) {
                 SettingsView()
@@ -71,7 +94,7 @@ struct HomeView: View {
                     .font(.custom("MonacoTTF", size: 18))
                     .frame(maxWidth: .infinity, alignment: .leading)
                 
-                Text("start by adding a note")
+                Text("start by adding a new folder")
                     .font(.custom("MonacoTTF", size: 18))
                     .frame(maxWidth: .infinity, alignment: .leading)
                 
@@ -84,12 +107,11 @@ struct HomeView: View {
             Spacer()
             
             Button {
-                showingNewNoteSheet = true
+                navigationPath.append("createFolder")
             } label: {
-                Text("Add Note")
+                Text("Create New Folder")
             }
-            .buttonSizing(.flexible)
-            .buttonStyle(.glassProminent)
+            .buttonStyle(.borderedProminent)
             .controlSize(.large)
         }
         .padding(.horizontal, 34)
@@ -113,7 +135,7 @@ struct HomeView: View {
                     orphanNotesSection
                 }
             }
-            .padding(.horizontal)
+            .padding(.horizontal, 20)
             .padding(.bottom, 80) // Space for FAB
         }
     }
@@ -123,12 +145,12 @@ struct HomeView: View {
     private var statsFooter: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text("→ \(fileStore.folderCount) folders: \(fileStore.noteCount) notes")
-                .font(.custom("MonacoTTF", size: 14))
+                .font(.custom("MonacoTTF", size: 18))
                 .foregroundStyle(.secondary)
             
             if !fileStore.orphanNotes.isEmpty {
                 Text("→ \(fileStore.orphanNotes.count) notes not in any folder")
-                    .font(.custom("MonacoTTF", size: 14))
+                    .font(.custom("MonacoTTF", size: 18))
                     .foregroundStyle(.secondary)
             }
         }
