@@ -164,7 +164,7 @@ When no folders or notes exist:
 ### Body
 
 - Plain text editor
-- MonacoTTF 18pt
+- System font with monospaced design
 - Full screen, no line numbers
 
 ### Keyboard Accessory
@@ -192,7 +192,6 @@ This prevents accumulation of empty untitled notes from accidental taps.
 
 **Options (v0):**
 - Appearance: light / dark / system
-- Auto-delete empty files: toggle (default: on)
 
 **Navigation:** Modal or pushed from Home.
 
@@ -210,9 +209,9 @@ app launch
 └─ (directory exists) → Home
     ├─ tap file → Editor
     │   └─ Back → Home
-    ├─ tap `+` → New Note sheet
+    ├─ tap `+` → New Note (pushed)
     │   ├─ tap folder → Editor (new note)
-    │   └─ tap `+ new folder` → create folder → Editor (new note)
+    │   └─ tap `new folder` → create folder → Editor (new note)
     ├─ tap Settings → Settings
     │   └─ Back → Home
     ├─ tap `...` → Sort menu
@@ -248,7 +247,7 @@ app launch
 | Save indicator | ✗ | optional |
 | Auto-delete empty files | ✓ | |
 | Settings: appearance | ✓ | |
-| Settings: auto-delete toggle | ✓ | |
+| Settings: auto-delete toggle | ✗ | |
 | Char count | ✗ | v1+ |
 | Gallery view | ✗ | v1+ |
 | Custom themes | ✗ | v1+ |
@@ -267,6 +266,6 @@ app launch
 ## Typography Notes
 
 - **Chrome UI (v0):** Normal case for buttons, titles, menu items ("Settings", "Back", "New Folder")
-- **Content text:** lowercase in pixel font (MonacoTTF 18pt)
-- **Rationale:** Pixel font needs refinement before using in chrome. Revisit in v1+ once custom typography is finalized.
+- **Content text:** system font with monospaced design
+- **Rationale:** System monospaced improves legibility and supports emphasis (bold/italic) when needed.
 

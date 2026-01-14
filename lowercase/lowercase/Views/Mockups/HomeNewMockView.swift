@@ -1,13 +1,13 @@
 //
-//  HomeMockView.swift
+//  HomeNewMockView.swift
 //  lowercase
 //
-//  Created by Herman Haidin on 09.01.2026.
+//  Created by Herman Haidin on 12.01.2026.
 //
 
 import SwiftUI
 
-struct HomeMockView: View {
+struct HomeNewMockView: View {
     @ScaledMetric private var gapWidth = 8.0
     @ScaledMetric private var chevronIconWidth = 16.0
     @ScaledMetric private var folderIconWidth = 20.0
@@ -16,18 +16,8 @@ struct HomeMockView: View {
     
     var body: some View {
         NavigationStack {
-            List {
-                // MARK: Stats header
-//                Section {
-//                    Text("→ 5 folders: 10 notes")
-//                        .foregroundStyle(.secondary)
-//
-//                }
-//                .listRowBackground(Color.clear)
-                
-                // Every folder is a section in a list
-                // MARK: Collapsed folder
-                Section {
+            ScrollView {
+                VStack(spacing: 0) {
                     Button {
                         // Expand or collapse folder
                     } label: {
@@ -43,19 +33,14 @@ struct HomeMockView: View {
                                 .frame(width: folderIconWidth)
                             
                             Text("templates")
-                                .font(.callout)
                                 .tint(.primary)
                                 .lineLimit(1)
                         }
+                        .padding(.vertical, 10)
+                        .padding(.horizontal, 8)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                } header: {
-                    Text("→ 5 folders: 10 notes")
-                        .foregroundStyle(.secondary)
-                        .fontWeight(.regular)
-                }
-                
-                // MARK: Expanded folder with notes
-                Section {
+                    
                     Button {
                         // Expand or collapse folder
                     } label: {
@@ -74,9 +59,11 @@ struct HomeMockView: View {
                                 .tint(.primary)
                                 .lineLimit(1)
                         }
+                        .padding(.vertical, 10)
+                        .padding(.horizontal, 8)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     
-                    // Note row
                     Button {
                         // Open note in editor
                     } label: {
@@ -96,9 +83,11 @@ struct HomeMockView: View {
                                 .tint(.primary)
                                 .lineLimit(1)
                         }
+                        .padding(.vertical, 10)
+                        .padding(.horizontal, 8)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     
-                    // Note row
                     Button {
                         // Open note in editor
                     } label: {
@@ -118,12 +107,11 @@ struct HomeMockView: View {
                                 .tint(.primary)
                                 .lineLimit(1)
                         }
+                        .padding(.vertical, 10)
+                        .padding(.horizontal, 8)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                }
-                .listRowSeparator(.hidden)
-                
-                // MARK: Expanded folder with subfolders
-                Section {
+                    
                     Button {
                         // Expand or collapse folder
                     } label: {
@@ -142,9 +130,11 @@ struct HomeMockView: View {
                                 .tint(.primary)
                                 .lineLimit(1)
                         }
+                        .padding(.vertical, 10)
+                        .padding(.horizontal, 8)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     
-                    // Folder row
                     Button {
                         // Expand or collapse folder
                     } label: {
@@ -166,9 +156,11 @@ struct HomeMockView: View {
                                 .tint(.primary)
                                 .lineLimit(1)
                         }
+                        .padding(.vertical, 10)
+                        .padding(.horizontal, 8)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     
-                    // Note row
                     Button {
                         // Open note in editor
                     } label: {
@@ -191,9 +183,65 @@ struct HomeMockView: View {
                                 .tint(.primary)
                                 .lineLimit(1)
                         }
+                        .padding(.vertical, 10)
+                        .padding(.horizontal, 8)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     
-                    // Folder row
+                    Button {
+                        // Open note in editor
+                    } label: {
+                        HStack(spacing: gapWidth) {
+                            Spacer()
+                                .frame(width: chevronIconWidth)
+                            
+                            Spacer()
+                                .frame(width: chevronIconWidth)
+                            
+                            Spacer()
+                                .frame(width: chevronIconWidth)
+                            
+                            Image(systemName: "text.document")
+                                .font(.title3.weight(.medium))
+                                .symbolRenderingMode(.multicolor)
+                                .frame(width: folderIconWidth)
+                            
+                            Text("xcode-tips")
+                                .tint(.primary)
+                                .lineLimit(1)
+                        }
+                        .padding(.vertical, 10)
+                        .padding(.horizontal, 8)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    
+                    Button {
+                        // Open note in editor
+                    } label: {
+                        HStack(spacing: gapWidth) {
+                            Spacer()
+                                .frame(width: chevronIconWidth)
+                            
+                            Spacer()
+                                .frame(width: chevronIconWidth)
+                            
+                            Spacer()
+                                .frame(width: chevronIconWidth)
+                            
+                            Image(systemName: "text.document")
+                                .font(.title3.weight(.medium))
+                                .symbolRenderingMode(.multicolor)
+                                .frame(width: folderIconWidth)
+                            
+                            Text("AGENTS")
+                                .tint(.primary)
+                                .lineLimit(1)
+                        }
+                        .padding(.vertical, 10)
+                        .padding(.horizontal, 8)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    
                     Button {
                         // Expand or collapse folder
                     } label: {
@@ -215,73 +263,65 @@ struct HomeMockView: View {
                                 .tint(.primary)
                                 .lineLimit(1)
                         }
+                        .padding(.vertical, 10)
+                        .padding(.horizontal, 8)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                }
-                .listRowSeparator(.hidden)
-                
-                // MARK: Stats footer
-                Section {
-                    VStack(alignment: .leading) {
-                        
-                        // If orfan notes exist
-                        Text("→ 3 notes not in any folder")
-                    }
-                    .foregroundStyle(.secondary)
-                }
-                .listRowBackground(Color.clear)
-                
-                // MARK: Orphan notes
-                Section {
-                    // Orphan note row
+                    
                     Button {
-                        // Open note in editor
+                        // Expand or collapse folder
                     } label: {
                         HStack(spacing: gapWidth) {
-                            Image(systemName: "questionmark")
+                            Image(systemName: "chevron.right")
                                 .font(.subheadline.bold())
                                 .tint(.secondary)
                                 .frame(width: chevronIconWidth)
                             
-                            Image(systemName: "text.document")
+                            Image(systemName: "folder.fill")
                                 .font(.title3.weight(.medium))
-                                .symbolRenderingMode(.multicolor)
+                                .tint(Color.blue.gradient)
                                 .frame(width: folderIconWidth)
                             
-                            Text("untitled-3")
+                            Text("taste")
                                 .tint(.primary)
                                 .lineLimit(1)
                         }
+                        .padding(.vertical, 10)
+                        .padding(.horizontal, 8)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     
-                    // Orphan note row
                     Button {
-                        // Open note in editor
+                        // Expand or collapse folder
                     } label: {
                         HStack(spacing: gapWidth) {
-                            Image(systemName: "questionmark")
+                            Image(systemName: "chevron.right")
                                 .font(.subheadline.bold())
                                 .tint(.secondary)
                                 .frame(width: chevronIconWidth)
                             
-                            Image(systemName: "text.document")
+                            Image(systemName: "folder.fill")
                                 .font(.title3.weight(.medium))
-                                .symbolRenderingMode(.multicolor)
+                                .tint(Color.blue.gradient)
                                 .frame(width: folderIconWidth)
                             
-                            Text("untitled-2")
+                            Text("archive")
                                 .tint(.primary)
                                 .lineLimit(1)
                         }
+                        .padding(.vertical, 10)
+                        .padding(.horizontal, 8)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     
-                    // Orphan note row
+                    // Orphan notes are shown next to folders in the root
+                    // No extra heading
+                    // Folders come first, then orphan notes
                     Button {
                         // Open note in editor
                     } label: {
                         HStack(spacing: gapWidth) {
-                            Image(systemName: "questionmark")
-                                .font(.subheadline.bold())
-                                .tint(.secondary)
+                            Spacer()
                                 .frame(width: chevronIconWidth)
                             
                             Image(systemName: "text.document")
@@ -293,15 +333,15 @@ struct HomeMockView: View {
                                 .tint(.primary)
                                 .lineLimit(1)
                         }
+                        .padding(.vertical, 10)
+                        .padding(.horizontal, 8)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
-                .listRowSeparator(.hidden)
             }
+            .background(Color(.systemGroupedBackground))
+            .contentMargins(.horizontal, 16)
             .monospaced()
-            .listSectionSpacing(8)
-            .environment(\.defaultMinListRowHeight, 40)
-            .scrollBounceBehavior(.basedOnSize)
-            // MARK: Toolbar with top and bottom buttons
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button {
@@ -312,9 +352,7 @@ struct HomeMockView: View {
                                 .font(.caption2)
                                 .foregroundStyle(.green.gradient)
                             
-                            Text("local")
-                                .font(.callout)
-                                .monospaced()
+                            Text("Local")
                             
                             Image(systemName: "chevron.up.chevron.down")
                                 .font(.caption2.bold())
@@ -323,14 +361,23 @@ struct HomeMockView: View {
                     }
                 }
                 
-                ToolbarSpacer(.fixed)
+                ToolbarItem {
+                    Button {
+                        // Expand all folders
+                    } label: {
+                        Image(systemName: "arrow.up.and.line.horizontal.and.arrow.down")
+                    }
+                }
                 
+                // You may use settings only once in a while
+                // That's why settings are hidden behind ellipsis
                 ToolbarItem {
                     Button {
                         // Open menu with:
+                        // - Select
                         // - Settings
-                        // - Sort by
-                        // "Sort by" opens a nested menu with sort options
+                        // - Sort By
+                        // "Sort By" opens a nested menu with sort options
                     } label: {
                         Image(systemName: "ellipsis")
                     }
@@ -338,6 +385,7 @@ struct HomeMockView: View {
                 
                 // MARK: Add note button is part of toolbar
                 ToolbarItemGroup(placement: .bottomBar) {
+                    
                     Spacer()
                     
                     Button("Add Note", systemImage: "plus", role: .confirm) {
@@ -345,10 +393,12 @@ struct HomeMockView: View {
                     }
                 }
             }
+            // Total number of folders and notes will be revealed when search screen appears
+            .searchable(text: $searchText)
         }
     }
 }
 
 #Preview {
-    HomeMockView()
+    HomeNewMockView()
 }

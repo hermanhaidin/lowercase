@@ -23,6 +23,8 @@ struct EditorView: View {
     @State private var newFilename: String = ""
     
     @FocusState private var isEditorFocused: Bool
+
+    @ScaledMetric private var gapWidth = 4.0
     
     // Auto-save debounce
     @State private var saveTask: Task<Void, Never>?
@@ -37,8 +39,9 @@ struct EditorView: View {
     
     var body: some View {
         TextEditor(text: $content)
-            .padding(.horizontal)
-            .font(.custom("MonacoTTF", size: 18))
+            .padding(.horizontal, 16)
+            .lcMonospaced()
+            .font(.callout)
             .scrollContentBackground(.hidden)
             .autocorrectionDisabled()
             .textInputAutocapitalization(.never)
@@ -47,17 +50,7 @@ struct EditorView: View {
                 scheduleAutoSave()
             }
             .toolbar {
-                ToolbarItem(placement: .principal) {
-                    Button {
-                        newFilename = filename
-                        showingRenameAlert = true
-                    } label: {
-                        Text(filename)
-                            .font(.custom("MonacoTTF", size: 18))
-                            .foregroundStyle(.primary)
-                    }
-                    .buttonStyle(.plain)
-                }
+                ToolbarItem(placement: .principal) { titleStack }
                 
                 ToolbarItem(placement: .topBarTrailing) {
                     moreMenuButton
@@ -79,14 +72,7 @@ struct EditorView: View {
             .navigationBarBackButtonHidden(true)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button {
-                        handleBackNavigation()
-                    } label: {
-                        HStack(spacing: 4) {
-                            Image(systemName: "chevron.left")
-                            Text("Back")
-                        }
-                    }
+                    Button("Back", systemImage: "chevron.left", action: handleBackNavigation)
                 }
             }
             .alert("Rename", isPresented: $showingRenameAlert) {
@@ -121,6 +107,37 @@ struct EditorView: View {
             .onDisappear {
                 finalizeExitIfNeeded()
             }
+    }
+
+    private var titleStack: some View {
+        VStack {
+            Button {
+                newFilename = filename
+                showingRenameAlert = true
+            } label: {
+                Text(filename)
+                    .foregroundStyle(.primary)
+            }
+            .buttonStyle(.plain)
+            
+            HStack(spacing: gapWidth) {
+                Image(systemName: "folder")
+                    .font(.caption2.weight(.medium))
+                    .foregroundStyle(Color.secondary.gradient)
+                
+                Text(folderLabel)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .lcMonospaced()
+    }
+    
+    private var folderLabel: String {
+        if note.isOrphan {
+            return "root"
+        }
+        return noteURL.deletingLastPathComponent().lastPathComponent
     }
     
     // MARK: - More Menu

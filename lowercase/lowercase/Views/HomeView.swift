@@ -5,14 +5,16 @@
 
 import SwiftUI
 
+enum HomeDestination: Hashable {
+    case newNote
+}
+
 struct HomeView: View {
     @Environment(FileStore.self) private var fileStore
     @Environment(AppState.self) private var appState
     
     @State private var navigationPath = NavigationPath()
-    @State private var showingNewNoteSheet = false
     @State private var showingSettings = false
-    @State private var pendingNoteForNavigation: Note?
     
     // Context menu state
     @State private var itemToRename: URL?
@@ -34,65 +36,36 @@ struct HomeView: View {
     }
     
     @State private var moveTarget: MoveTarget?
+
+    @ScaledMetric private var gapWidth = 8.0
+    @ScaledMetric private var chevronIconWidth = 16.0
+    @ScaledMetric private var folderIconWidth = 20.0
     
     var body: some View {
         NavigationStack(path: $navigationPath) {
-            ZStack(alignment: .bottomTrailing) {
-                if fileStore.folders.isEmpty && fileStore.orphanNotes.isEmpty {
-                    emptyState
-                } else {
-                    contentList
-                }
-                
-                // FAB - only show when not empty (empty state has its own button)
-                if !fileStore.folders.isEmpty || !fileStore.orphanNotes.isEmpty {
-                    fab
-                }
-            }
+            contentList
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    storageSwitcher
-                }
+                ToolbarItem(placement: .topBarLeading) { storageSwitcher }
+                ToolbarItem(placement: .topBarTrailing) { topMenu }
                 
-                ToolbarItem {
-                    Button("Settings") {
-                        showingSettings = true
+                ToolbarItemGroup(placement: .bottomBar) {
+                    Spacer()
+                    Button("Add Note", systemImage: "plus", role: .confirm) {
+                        navigationPath.append(HomeDestination.newNote)
                     }
                 }
-                
-                ToolbarSpacer(.fixed)
-                
-                ToolbarItem {
-                    sortMenuButton
-                }
-
             }
             .navigationDestination(for: Note.self) { note in
                 EditorView(note: note)
             }
-            .navigationDestination(for: String.self) { destination in
-                if destination == "createFolder" {
-                    CreateFolderView(
-                        createNoteAfterFolder: true,
-                        onNoteCreated: { note in
-                            // Pop CreateFolderView and push Editor
-                            navigationPath.removeLast()
-                            navigationPath.append(note)
-                        }
-                    )
-                }
-            }
-            .sheet(isPresented: $showingNewNoteSheet) {
-                NewNoteSheet(onNoteCreated: { note in
-                    // After sheet dismisses, navigate to editor
-                    pendingNoteForNavigation = note
-                })
-            }
-            .onChange(of: showingNewNoteSheet) { wasShowing, isShowing in
-                // When sheet dismisses, navigate to the created note
-                if wasShowing && !isShowing, let note = pendingNoteForNavigation {
-                    navigationPath.append(note)
-                    pendingNoteForNavigation = nil
+            .navigationDestination(for: HomeDestination.self) { destination in
+                switch destination {
+                case .newNote:
+                    NewNoteView { note in
+                        // Replace NewNoteView with EditorView so Back returns to Home.
+                        navigationPath.removeLast()
+                        navigationPath.append(note)
+                    }
                 }
             }
             .sheet(isPresented: $showingSettings) {
@@ -223,151 +196,65 @@ struct HomeView: View {
         }
     }
     
-    // MARK: - Empty State
-    
-    private var emptyState: some View {
-        VStack {
-            Spacer()
-            
-            VStack(alignment: .leading, spacing: 24) {
-                Text("no notes yet...")
-                    .font(.custom("MonacoTTF", size: 18))
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                
-                Text("start by adding a new folder")
-                    .font(.custom("MonacoTTF", size: 18))
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                
-                Text("0 folders: 0 notes")
-                    .font(.custom("MonacoTTF", size: 18))
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            
-            Spacer()
-            
-            Button {
-                navigationPath.append("createFolder")
-            } label: {
-                Text("Create New Folder")
-            }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
-        }
-        .padding(.horizontal, 34)
-    }
-    
     // MARK: - Content List
     
     private var contentList: some View {
         ScrollView {
-            LazyVStack(spacing: 8) {
-                // Folders
+            VStack(spacing: 0) {
                 ForEach(fileStore.folders) { folder in
-                    FolderSection(folder: folder)
+                    HomeFolderTreeRows(
+                        folder: folder,
+                        depth: 0,
+                        gapWidth: gapWidth,
+                        chevronIconWidth: chevronIconWidth,
+                        folderIconWidth: folderIconWidth,
+                        isExpanded: fileStore.isFolderExpanded,
+                        onToggleExpanded: fileStore.toggleFolderExpansion,
+                        folderContextMenu: folderContextMenu(for:),
+                        noteContextMenu: noteContextMenu(for:)
+                    )
                 }
                 
-                // Stats footer
-                statsFooter
+                ForEach(fileStore.orphanNotes) { note in
+                    noteRow(note, depth: 0, isOrphan: true)
+                        .contextMenu { noteContextMenu(for: note) }
+                }
+            }
+        }
+        .contentMargins(.horizontal, 16)
+        .lcMonospaced()
+        .background(Color(.systemGroupedBackground))
+    }
+    
+    private func noteRow(_ note: Note, depth: Int, isOrphan: Bool) -> some View {
+        NavigationLink(value: note) {
+            HStack(spacing: gapWidth) {
+                if isOrphan {
+                    Image(systemName: "questionmark")
+                        .font(.subheadline.bold())
+                        .foregroundStyle(.secondary)
+                        .frame(width: chevronIconWidth)
+                } else {
+                    Spacer()
+                        .frame(width: CGFloat(depth) * chevronIconWidth)
+                    Spacer()
+                        .frame(width: chevronIconWidth)
+                }
                 
-                // Orphan notes section
-                if !fileStore.orphanNotes.isEmpty {
-                    orphanNotesSection
-                }
+                Image(systemName: "text.document")
+                    .font(.title3.weight(.medium))
+                    .symbolRenderingMode(.multicolor)
+                    .frame(width: folderIconWidth)
+                
+                Text(note.filename)
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
             }
-            .padding(.horizontal, 20)
-            .padding(.bottom, 80) // Space for FAB
+            .padding(.vertical, 10)
+            .padding(.horizontal, 8)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-    }
-    
-    // MARK: - Stats Footer
-    
-    private var statsFooter: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("→ \(fileStore.folderCount) folders: \(fileStore.noteCount) notes")
-                .font(.custom("MonacoTTF", size: 18))
-                .foregroundStyle(.secondary)
-            
-            if !fileStore.orphanNotes.isEmpty {
-                Text("→ \(fileStore.orphanNotes.count) notes not in any folder")
-                    .font(.custom("MonacoTTF", size: 18))
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.vertical, 8)
-    }
-    
-    // MARK: - Orphan Notes Section
-    
-    private var orphanNotesSection: some View {
-        VStack(spacing: 0) {
-            ForEach(fileStore.orphanNotes) { note in
-                NavigationLink(value: note) {
-                    HStack {
-                        Text("?")
-                            .font(.custom("MonacoTTF", size: 16))
-                            .foregroundStyle(.secondary)
-                        
-                        Text(note.filename)
-                            .font(.custom("MonacoTTF", size: 16))
-                            .foregroundStyle(.primary)
-                        
-                        Spacer()
-                        
-                        Image(systemName: "chevron.right")
-                            .font(.caption)
-                            .foregroundStyle(.tertiary)
-                    }
-                    .padding()
-                }
-                .contextMenu {
-                    Button {
-                        itemToRename = note.url
-                        isRenamingFolder = false
-                        newName = note.filename
-                        showingRenameAlert = true
-                    } label: {
-                        Label("Rename", systemImage: "pencil")
-                    }
-                    
-                    Button {
-                        moveTarget = MoveTarget(note.url)
-                    } label: {
-                        Label("Move to...", systemImage: "folder")
-                    }
-                    
-                    Divider()
-                    
-                    Button(role: .destructive) {
-                        itemToDelete = note.url
-                        showingDeleteConfirmation = true
-                    } label: {
-                        Label("Delete", systemImage: "trash")
-                    }
-                }
-            }
-        }
-        .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-    }
-    
-    // MARK: - FAB
-    
-    private var fab: some View {
-        Button {
-            showingNewNoteSheet = true
-        } label: {
-            Image(systemName: "plus")
-                .font(.title2)
-                .fontWeight(.semibold)
-                .foregroundStyle(.white)
-                .frame(width: 56, height: 56)
-                .background(Color.blue)
-                .clipShape(Circle())
-                .shadow(radius: 4, y: 2)
-        }
-        .padding()
+        .buttonStyle(.plain)
     }
     
     // MARK: - Storage Switcher
@@ -392,33 +279,35 @@ struct HomeView: View {
                 }
             }
         } label: {
-            HStack(spacing: 8) {
-                Circle()
-                    .fill(.green)
-                    .frame(width: 8, height: 8)
+            HStack(spacing: gapWidth) {
+                Image(systemName: "circle.fill")
+                    .font(.caption2)
+                    .foregroundStyle(.green.gradient)
                 
                 Text(appState.currentRoot.shortName)
                 
-                Image(systemName: "chevron.down")
-                    .font(.caption2)
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.caption2.bold())
+                    .foregroundStyle(.secondary)
             }
-            .padding(.horizontal, 4)
         }
     }
     
-    // MARK: - Sort Menu
-    
-    private var sortMenuButton: some View {
+    private var topMenu: some View {
         Menu {
-            ForEach(SortOption.allCases) { option in
-                Button {
-                    appState.sortOption = option
-                    fileStore.sort(by: option)
-                } label: {
-                    HStack {
-                        Text(option.displayName)
-                        if option == appState.sortOption {
-                            Image(systemName: "checkmark")
+            Button("Settings") { showingSettings = true }
+            
+            Menu("Sort by") {
+                ForEach(SortOption.allCases) { option in
+                    Button {
+                        appState.sortOption = option
+                        fileStore.sort(by: option)
+                    } label: {
+                        HStack {
+                            Text(option.displayName)
+                            if option == appState.sortOption {
+                                Image(systemName: "checkmark")
+                            }
                         }
                     }
                 }
@@ -429,331 +318,111 @@ struct HomeView: View {
     }
 }
 
-// MARK: - Folder Section
-
-struct FolderSection: View {
-    @Environment(FileStore.self) private var fileStore
-    let folder: Folder
-    
-    // Context menu state
-    @State private var showingRenameAlert = false
-    @State private var showingDeleteConfirmation = false
-    @State private var newName = ""
-    @State private var noteToRename: Note?
-    @State private var noteToMove: Note?
-    @State private var noteToDelete: Note?
-    
-    var body: some View {
-        VStack(spacing: 0) {
-            // Folder header
-            Button {
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    fileStore.toggleFolderExpansion(folder.url)
-                }
-            } label: {
-                HStack {
-                    Image(systemName: fileStore.isFolderExpanded(folder.url) ? "chevron.down" : "chevron.right")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .frame(width: 16)
-                    
-                    Text(folder.name)
-                        .font(.custom("MonacoTTF", size: 16))
-                        .foregroundStyle(.primary)
-                    
-                    Spacer()
-                }
-                .padding()
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .contextMenu {
-                Button {
-                    newName = folder.name
-                    showingRenameAlert = true
-                } label: {
-                    Label("Rename", systemImage: "pencil")
-                }
-                
-                Divider()
-                
-                Button(role: .destructive) {
-                    showingDeleteConfirmation = true
-                } label: {
-                    Label("Delete", systemImage: "trash")
-                }
-            }
-            
-            // Expanded content
-            if fileStore.isFolderExpanded(folder.url) {
-                VStack(spacing: 0) {
-                    // Notes in this folder
-                    ForEach(folder.notes) { note in
-                        NavigationLink(value: note) {
-                            HStack {
-                                Text(note.filename)
-                                    .font(.custom("MonacoTTF", size: 16))
-                                    .foregroundStyle(.primary)
-                                
-                                Spacer()
-                                
-                                Image(systemName: "chevron.right")
-                                    .font(.caption)
-                                    .foregroundStyle(.tertiary)
-                            }
-                            .padding()
-                            .padding(.leading, 24)
-                        }
-                        .contextMenu {
-                            Button {
-                                noteToRename = note
-                                newName = note.filename
-                                showingRenameAlert = true
-                            } label: {
-                                Label("Rename", systemImage: "pencil")
-                            }
-                            
-                            Button {
-                                noteToMove = note
-                            } label: {
-                                Label("Move to...", systemImage: "folder")
-                            }
-                            
-                            Divider()
-                            
-                            Button(role: .destructive) {
-                                noteToDelete = note
-                                showingDeleteConfirmation = true
-                            } label: {
-                                Label("Delete", systemImage: "trash")
-                            }
-                        }
-                    }
-                    
-                    // Subfolders
-                    ForEach(folder.subfolders) { subfolder in
-                        SubfolderSection(folder: subfolder, depth: 1)
-                    }
-                }
-            }
-        }
-        .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-        .alert("Rename", isPresented: $showingRenameAlert) {
-            TextField("Name", text: $newName)
-            Button("Cancel", role: .cancel) {
-                noteToRename = nil
-            }
-            Button("Rename") {
-                performRename()
-            }
-        }
-        .confirmationDialog("Delete", isPresented: $showingDeleteConfirmation, titleVisibility: .visible) {
-            Button("Delete", role: .destructive) {
-                performDelete()
-            }
-            Button("Cancel", role: .cancel) {
-                noteToDelete = nil
-            }
-        } message: {
-            Text("This action cannot be undone.")
-        }
-        .sheet(item: $noteToMove) { note in
-            MoveToSheet(noteURL: note.url)
-        }
-    }
-    
-    private func performRename() {
-        let trimmed = newName.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return }
-        
-        do {
-            if let note = noteToRename {
-                _ = try fileStore.renameNote(at: note.url, to: trimmed)
-                noteToRename = nil
-            } else {
-                _ = try fileStore.renameFolder(at: folder.url, to: trimmed)
-            }
-        } catch {
-            print("Rename failed: \(error)")
-        }
-        newName = ""
-    }
-    
-    private func performDelete() {
-        do {
-            if let note = noteToDelete {
-                try fileStore.deleteNote(at: note.url)
-                noteToDelete = nil
-            } else {
-                try fileStore.deleteFolder(at: folder.url)
-            }
-        } catch {
-            print("Delete failed: \(error)")
-        }
+private struct NoHighlightButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
     }
 }
 
-// MARK: - Subfolder Section
-
-struct SubfolderSection: View {
-    @Environment(FileStore.self) private var fileStore
+private struct HomeFolderTreeRows<FolderMenu: View, NoteMenu: View>: View {
     let folder: Folder
     let depth: Int
-    
-    // Context menu state
-    @State private var showingRenameAlert = false
-    @State private var showingDeleteConfirmation = false
-    @State private var newName = ""
-    @State private var noteToRename: Note?
-    @State private var noteToMove: Note?
-    @State private var noteToDelete: Note?
+    let gapWidth: CGFloat
+    let chevronIconWidth: CGFloat
+    let folderIconWidth: CGFloat
+    let isExpanded: (URL) -> Bool
+    let onToggleExpanded: (URL) -> Void
+    @ViewBuilder let folderContextMenu: (Folder) -> FolderMenu
+    @ViewBuilder let noteContextMenu: (Note) -> NoteMenu
     
     var body: some View {
-        VStack(spacing: 0) {
-            // Subfolder header
-            Button {
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    fileStore.toggleFolderExpansion(folder.url)
-                }
-            } label: {
-                HStack {
-                    Image(systemName: fileStore.isFolderExpanded(folder.url) ? "chevron.down" : "chevron.right")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .frame(width: 16)
-                    
-                    Text(folder.name)
-                        .font(.custom("MonacoTTF", size: 16))
-                        .foregroundStyle(.primary)
-                    
-                    Spacer()
-                }
-                .padding()
-                .padding(.leading, CGFloat(depth) * 24)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .contextMenu {
-                Button {
-                    newName = folder.name
-                    showingRenameAlert = true
-                } label: {
-                    Label("Rename", systemImage: "pencil")
-                }
-                
-                Divider()
-                
-                Button(role: .destructive) {
-                    showingDeleteConfirmation = true
-                } label: {
-                    Label("Delete", systemImage: "trash")
-                }
-            }
+        Group {
+            folderHeaderRow(folder, depth: depth)
+                .contextMenu { folderContextMenu(folder) }
             
-            // Expanded content
-            if fileStore.isFolderExpanded(folder.url) {
-                // Notes
-                ForEach(folder.notes) { note in
-                    NavigationLink(value: note) {
-                        HStack {
-                            Text(note.filename)
-                                .font(.custom("MonacoTTF", size: 16))
-                                .foregroundStyle(.primary)
-                            
-                            Spacer()
-                            
-                            Image(systemName: "chevron.right")
-                                .font(.caption)
-                                .foregroundStyle(.tertiary)
+            if isExpanded(folder.url) {
+                VStack(spacing: 0) {
+                    ForEach(folder.notes) { note in
+                        NavigationLink(value: note) {
+                            noteRowContent(note, depth: depth + 1)
                         }
-                        .padding()
-                        .padding(.leading, CGFloat(depth + 1) * 24)
+                        .buttonStyle(.plain)
+                        .contextMenu { noteContextMenu(note) }
                     }
-                    .contextMenu {
-                        Button {
-                            noteToRename = note
-                            newName = note.filename
-                            showingRenameAlert = true
-                        } label: {
-                            Label("Rename", systemImage: "pencil")
-                        }
-                        
-                        Button {
-                            noteToMove = note
-                        } label: {
-                            Label("Move to...", systemImage: "folder")
-                        }
-                        
-                        Divider()
-                        
-                        Button(role: .destructive) {
-                            noteToDelete = note
-                            showingDeleteConfirmation = true
-                        } label: {
-                            Label("Delete", systemImage: "trash")
-                        }
+                    
+                    ForEach(folder.subfolders) { subfolder in
+                        HomeFolderTreeRows(
+                            folder: subfolder,
+                            depth: depth + 1,
+                            gapWidth: gapWidth,
+                            chevronIconWidth: chevronIconWidth,
+                            folderIconWidth: folderIconWidth,
+                            isExpanded: isExpanded,
+                            onToggleExpanded: onToggleExpanded,
+                            folderContextMenu: folderContextMenu,
+                            noteContextMenu: noteContextMenu
+                        )
                     }
+                }
+            }
+        }
+    }
+    
+    private func folderHeaderRow(_ folder: Folder, depth: Int) -> some View {
+        Button {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                onToggleExpanded(folder.url)
+            }
+        } label: {
+            HStack(spacing: gapWidth) {
+                if depth > 0 {
+                    Spacer()
+                        .frame(width: CGFloat(depth) * chevronIconWidth)
                 }
                 
-                // Nested subfolders
-                ForEach(folder.subfolders) { subfolder in
-                    SubfolderSection(folder: subfolder, depth: depth + 1)
-                }
+                Image(systemName: "chevron.right")
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.secondary)
+                    .frame(width: chevronIconWidth)
+                    .rotationEffect(.degrees(isExpanded(folder.url) ? 90 : 0))
+                
+                Image(systemName: "folder.fill")
+                    .font(.title3.weight(.medium))
+                    .foregroundStyle(Color.blue.gradient)
+                    .frame(width: folderIconWidth)
+                
+                Text(folder.name)
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
             }
+            .padding(.vertical, 10)
+            .padding(.horizontal, 8)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
         }
-        .alert("Rename", isPresented: $showingRenameAlert) {
-            TextField("Name", text: $newName)
-            Button("Cancel", role: .cancel) {
-                noteToRename = nil
-            }
-            Button("Rename") {
-                performRename()
-            }
-        }
-        .confirmationDialog("Delete", isPresented: $showingDeleteConfirmation, titleVisibility: .visible) {
-            Button("Delete", role: .destructive) {
-                performDelete()
-            }
-            Button("Cancel", role: .cancel) {
-                noteToDelete = nil
-            }
-        } message: {
-            Text("This action cannot be undone.")
-        }
-        .sheet(item: $noteToMove) { note in
-            MoveToSheet(noteURL: note.url)
-        }
+        .buttonStyle(NoHighlightButtonStyle())
     }
     
-    private func performRename() {
-        let trimmed = newName.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return }
-        
-        do {
-            if let note = noteToRename {
-                _ = try fileStore.renameNote(at: note.url, to: trimmed)
-                noteToRename = nil
-            } else {
-                _ = try fileStore.renameFolder(at: folder.url, to: trimmed)
-            }
-        } catch {
-            print("Rename failed: \(error)")
+    private func noteRowContent(_ note: Note, depth: Int) -> some View {
+        HStack(spacing: gapWidth) {
+            Spacer()
+                .frame(width: CGFloat(depth) * chevronIconWidth)
+            
+            Spacer()
+                .frame(width: chevronIconWidth)
+            
+            Image(systemName: "text.document")
+                .font(.title3.weight(.medium))
+                .symbolRenderingMode(.multicolor)
+                .frame(width: folderIconWidth)
+            
+            Text(note.filename)
+                .foregroundStyle(.primary)
+                .lineLimit(1)
         }
-        newName = ""
-    }
-    
-    private func performDelete() {
-        do {
-            if let note = noteToDelete {
-                try fileStore.deleteNote(at: note.url)
-                noteToDelete = nil
-            } else {
-                try fileStore.deleteFolder(at: folder.url)
-            }
-        } catch {
-            print("Delete failed: \(error)")
-        }
+        .padding(.vertical, 10)
+        .padding(.horizontal, 8)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 

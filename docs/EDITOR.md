@@ -72,16 +72,9 @@ Capitalization is always intentional.
 
 ## Typography
 
-- Editor text uses `MonacoTTF` at **18pt**
-    - Pixel font is reserved for the writing surface
-    - Keep sizes integer to avoid blurry rendering
-
-- UI chrome (navigation, buttons, settings, menus) uses **system font** in `v0`
-    - MonacoTTF has imperfect vertical metrics (baseline / line box), which causes misalignment in tight controls
-    - Bold/italic styling is not supported in `v0` even if syntax exists
-    - Revisit custom chrome typography after:
-        - Pixel/bitmap icon set exists, and / or
-        - Font file is revised to support correct baseline + bold + italic.
+- Editor text uses **system font** with monospaced design (via `.monospaced()` / monospaced font design).
+    - Improves legibility across dynamic type sizes
+    - Enables bold/italic variants for hierarchy and emphasis when we choose to use them
 
 ## Explicit Non-Goals
 

@@ -28,44 +28,40 @@ struct CreateFolderView: View {
     }
     
     var body: some View {
-        VStack(spacing: 24) {
-            // Folder name input
-            VStack(alignment: .leading, spacing: 8) {
+        Form {
+            Section {
                 TextField("folder name e.g. daily", text: $folderName)
-                    .font(.custom("MonacoTTF", size: 16))
-                    .textFieldStyle(.roundedBorder)
                     .autocorrectionDisabled()
                     .textInputAutocapitalization(.never)
                     .focused($isNameFocused)
                     .onSubmit {
-                        if canCreate {
-                            createFolder()
-                        }
+                        if canCreate { createFolder() }
                     }
-                
-                if let error = errorMessage {
+            }
+            
+            if let error = errorMessage {
+                Section {
                     Text(error)
-                        .font(.custom("MonacoTTF", size: 14))
                         .foregroundStyle(.red)
                 }
+                .listRowBackground(Color.clear)
             }
-            
-            Spacer()
-            
-            // Create button
-            Button {
-                createFolder()
-            } label: {
-                Text("Create")
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
-            .disabled(!canCreate)
         }
-        .padding()
+        .lcFormDefaults()
         .navigationTitle("New Folder")
         .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Back", systemImage: "chevron.left") { dismiss() }
+            }
+        }
+        .safeAreaBar(edge: .bottom) {
+            Button("Create", role: .confirm) { createFolder() }
+                .lcPrimaryActionButton()
+                .padding(.horizontal, LCMetrics.bezelPadding)
+                .disabled(!canCreate)
+        }
         .onAppear {
             isNameFocused = true
         }

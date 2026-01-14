@@ -5,130 +5,115 @@
 
 import SwiftUI
 
-struct NewNoteSheet: View {
+struct NewNoteView: View {
     @Environment(FileStore.self) private var fileStore
     @Environment(\.dismiss) private var dismiss
     
     /// Called when a note is created - HomeView will handle navigation to Editor
-    var onNoteCreated: ((Note) -> Void)?
+    var onNoteCreated: ((Note) -> Void)
     
     @State private var isCreatingFolder = false
     @State private var newFolderName = ""
     
     @FocusState private var isFolderNameFocused: Bool
     
+    @ScaledMetric private var gapWidth = 8.0
+    @ScaledMetric private var indentWidth = 16.0
+    @ScaledMetric private var folderIconWidth = 20.0
+    
     var body: some View {
-        NavigationStack {
-            Group {
-                if fileStore.folders.isEmpty {
-                    noFoldersView
-                } else {
-                    folderListView
-                }
-            }
+        folderListView
             .navigationTitle("New Note")
             .navigationBarTitleDisplayMode(.inline)
+            .navigationBarBackButtonHidden(true)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button {
-                        dismiss()
-                    } label: {
-                        Image(systemName: "xmark")
-                    }
+                    Button("Back", systemImage: "chevron.left") { dismiss() }
+                }
+                
+                ToolbarItem {
+                    Button { } label: { Image(systemName: "ellipsis") }
                 }
             }
-        }
-    }
-    
-    // MARK: - No Folders View
-    
-    private var noFoldersView: some View {
-        VStack(spacing: 24) {
-            Spacer()
-            
-            Text("create a folder first")
-                .font(.custom("MonacoTTF", size: 18))
-                .foregroundStyle(.secondary)
-            
-            if isCreatingFolder {
-                folderNameInput
-            } else {
-                Button {
-                    isCreatingFolder = true
-                    isFolderNameFocused = true
-                } label: {
-                    Text("+ new folder")
-                        .font(.custom("MonacoTTF", size: 16))
-                }
-                .buttonStyle(.borderedProminent)
-            }
-            
-            Spacer()
-        }
-        .padding()
     }
     
     // MARK: - Folder List View
     
     private var folderListView: some View {
-        ScrollView {
-            LazyVStack(spacing: 8) {
-                // New folder button at top
+        List {
+            Section {
                 if isCreatingFolder {
-                    folderNameInput
-                        .padding(.horizontal)
+                    folderNameInputRow
                 } else {
                     Button {
                         isCreatingFolder = true
                         isFolderNameFocused = true
                     } label: {
-                        HStack {
-                            Text("+ new folder")
-                                .font(.custom("MonacoTTF", size: 16))
-                                .foregroundStyle(.blue)
-                            Spacer()
+                        HStack(spacing: gapWidth) {
+                            Image(systemName: "plus")
+                                .frame(width: folderIconWidth)
+                                .padding(.leading, 8)
+                            
+                            Text("new folder")
                         }
-                        .padding()
                     }
                 }
-                
-                // Folder list
-                ForEach(fileStore.folders) { folder in
-                    FolderPickerRow(
-                        folder: folder,
-                        depth: 0,
-                        onSelect: { selectedFolder in
-                            createNoteInFolder(selectedFolder)
-                        }
-                    )
-                }
             }
-            .padding(.horizontal)
+            .listRowBackground(Color.clear)
+            
+            ForEach(fileStore.folders) { folder in
+                FolderPickerTreeRows(
+                    folder: folder,
+                    depth: 0,
+                    gapWidth: gapWidth,
+                    indentWidth: indentWidth,
+                    folderIconWidth: folderIconWidth,
+                    onSelect: createNoteInFolder
+                )
+            }
+        }
+        .lcListDefaults()
+    }
+    
+    private func folderRow(_ folder: Folder, depth: Int) -> some View {
+        Button {
+            createNoteInFolder(folder)
+        } label: {
+            HStack(spacing: gapWidth) {
+                if depth > 0 {
+                    Spacer().frame(width: CGFloat(depth) * indentWidth)
+                }
+                
+                Image(systemName: "folder.fill")
+                    .font(.title3.weight(.medium))
+                    .tint(Color.blue.gradient)
+                    .frame(width: folderIconWidth)
+                    .padding(.leading, 8)
+                
+                Text(folder.name)
+                    .tint(.primary)
+                    .lineLimit(1)
+                
+                Spacer()
+                
+                Image(systemName: "chevron.right")
+                    .font(.subheadline.bold())
+                    .tint(.secondary)
+            }
         }
     }
     
-    // MARK: - Folder Name Input
-    
-    private var folderNameInput: some View {
-        HStack {
+    private var folderNameInputRow: some View {
+        HStack(spacing: gapWidth) {
             TextField("folder name", text: $newFolderName)
-                .font(.custom("MonacoTTF", size: 16))
-                .textFieldStyle(.roundedBorder)
                 .autocorrectionDisabled()
                 .textInputAutocapitalization(.never)
                 .focused($isFolderNameFocused)
-                .onSubmit {
-                    createFolderAndNote()
-                }
+                .onSubmit { createFolderAndNote() }
             
-            Button("Create") {
-                createFolderAndNote()
-            }
-            .disabled(newFolderName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            Button("Create") { createFolderAndNote() }
+                .disabled(newFolderName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
         }
-        .padding()
-        .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
     }
     
     // MARK: - Actions
@@ -140,8 +125,7 @@ struct NewNoteSheet: View {
         do {
             let folderURL = try fileStore.createFolder(named: trimmed)
             let note = try fileStore.createNote(in: folderURL)
-            onNoteCreated?(note)
-            dismiss()
+            onNoteCreated(note)
         } catch {
             print("Failed to create folder/note: \(error)")
         }
@@ -153,61 +137,70 @@ struct NewNoteSheet: View {
     private func createNoteInFolder(_ folder: Folder) {
         do {
             let note = try fileStore.createNote(in: folder.url)
-            onNoteCreated?(note)
-            dismiss()
+            onNoteCreated(note)
         } catch {
             print("Failed to create note: \(error)")
         }
     }
 }
 
-// MARK: - Folder Picker Row
-
-struct FolderPickerRow: View {
+private struct FolderPickerTreeRows: View {
     let folder: Folder
     let depth: Int
+    let gapWidth: CGFloat
+    let indentWidth: CGFloat
+    let folderIconWidth: CGFloat
     let onSelect: (Folder) -> Void
     
     var body: some View {
-        VStack(spacing: 0) {
-            // Folder row
-            Button {
-                onSelect(folder)
-            } label: {
-                HStack {
-                    Text(folder.name)
-                        .font(.custom("MonacoTTF", size: 16))
-                        .foregroundStyle(.primary)
-                    
-                    Spacer()
-                    
-                    Image(systemName: "chevron.right")
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
+        Group {
+            Section {
+                Button {
+                    onSelect(folder)
+                } label: {
+                    HStack(spacing: gapWidth) {
+                        if depth > 0 {
+                            Spacer().frame(width: CGFloat(depth) * indentWidth)
+                        }
+                        
+                        Image(systemName: "folder.fill")
+                            .font(.title3.weight(.medium))
+                            .tint(Color.blue.gradient)
+                            .frame(width: folderIconWidth)
+                            .padding(.leading, 8)
+                        
+                        Text(folder.name)
+                            .tint(.primary)
+                            .lineLimit(1)
+                        
+                        Spacer()
+                        
+                        Image(systemName: "chevron.right")
+                            .font(.subheadline.bold())
+                            .tint(.secondary)
+                    }
                 }
-                .padding()
-                .padding(.leading, CGFloat(depth) * 16)
-                .contentShape(Rectangle())
             }
-            .buttonStyle(.plain)
             
-            // Subfolders (always show expanded)
             if !folder.subfolders.isEmpty {
                 ForEach(folder.subfolders) { subfolder in
-                    FolderPickerRow(
+                    FolderPickerTreeRows(
                         folder: subfolder,
                         depth: depth + 1,
+                        gapWidth: gapWidth,
+                        indentWidth: indentWidth,
+                        folderIconWidth: folderIconWidth,
                         onSelect: onSelect
                     )
                 }
             }
         }
-        .background(depth == 0 ? Color(.secondarySystemGroupedBackground) : Color.clear)
-        .clipShape(RoundedRectangle(cornerRadius: depth == 0 ? 12 : 0))
     }
 }
 
 #Preview {
-    NewNoteSheet()
-        .environment(FileStore())
+    NavigationStack {
+        NewNoteView { _ in }
+            .environment(FileStore())
+    }
 }

@@ -18,44 +18,47 @@ struct MoveToSheet: View {
     @State private var newFolderName = ""
     
     @FocusState private var isFolderNameFocused: Bool
+
+    @ScaledMetric private var gapWidth = 8.0
+    @ScaledMetric private var indentWidth = 16.0
+    @ScaledMetric private var folderIconWidth = 20.0
     
     var body: some View {
         NavigationStack {
-            ScrollView {
-                LazyVStack(spacing: 8) {
-                    // New folder button at top
+            List {
+                Section {
                     if isCreatingFolder {
-                        folderNameInput
-                            .padding(.horizontal)
+                        folderNameInputRow
                     } else {
                         Button {
                             isCreatingFolder = true
                             isFolderNameFocused = true
                         } label: {
-                            HStack {
-                                Text("+ new folder")
-                                    .font(.custom("MonacoTTF", size: 16))
-                                    .foregroundStyle(.blue)
-                                Spacer()
+                            HStack(spacing: gapWidth) {
+                                Image(systemName: "plus")
+                                    .frame(width: folderIconWidth)
+                                    .padding(.leading, 8)
+                                
+                                Text("new folder")
                             }
-                            .padding()
                         }
                     }
-                    
-                    // Folder list
-                    ForEach(fileStore.folders) { folder in
-                        MoveFolderPickerRow(
-                            folder: folder,
-                            depth: 0,
-                            currentNoteURL: noteURL,
-                            onSelect: { selectedFolder in
-                                moveNoteToFolder(selectedFolder)
-                            }
-                        )
-                    }
                 }
-                .padding(.horizontal)
+                .listRowBackground(Color.clear)
+                
+                ForEach(fileStore.folders) { folder in
+                    MoveFolderPickerTreeRows(
+                        folder: folder,
+                        depth: 0,
+                        currentFolderURL: currentFolderURL,
+                        gapWidth: gapWidth,
+                        indentWidth: indentWidth,
+                        folderIconWidth: folderIconWidth,
+                        onSelect: moveNoteToFolder
+                    )
+                }
             }
+            .lcListDefaults()
             .navigationTitle("Move to...")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -72,26 +75,57 @@ struct MoveToSheet: View {
     
     // MARK: - Folder Name Input
     
-    private var folderNameInput: some View {
-        HStack {
+    private var folderNameInputRow: some View {
+        HStack(spacing: gapWidth) {
             TextField("folder name", text: $newFolderName)
-                .font(.custom("MonacoTTF", size: 16))
-                .textFieldStyle(.roundedBorder)
                 .autocorrectionDisabled()
                 .textInputAutocapitalization(.never)
                 .focused($isFolderNameFocused)
-                .onSubmit {
-                    createFolderAndMove()
-                }
+                .onSubmit { createFolderAndMove() }
             
-            Button("Create") {
-                createFolderAndMove()
-            }
-            .disabled(newFolderName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            Button("Create") { createFolderAndMove() }
+                .disabled(newFolderName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
         }
-        .padding()
-        .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+    
+    private var currentFolderURL: URL {
+        noteURL.deletingLastPathComponent()
+    }
+    
+    private func folderRow(_ folder: Folder, depth: Int) -> some View {
+        let isCurrent = (folder.url == currentFolderURL)
+        
+        return Button {
+            moveNoteToFolder(folder)
+        } label: {
+            HStack(spacing: gapWidth) {
+                if depth > 0 {
+                    Spacer().frame(width: CGFloat(depth) * indentWidth)
+                }
+                
+                Image(systemName: "folder.fill")
+                    .font(.title3.weight(.medium))
+                    .tint(Color.blue.gradient)
+                    .frame(width: folderIconWidth)
+                    .padding(.leading, 8)
+                
+                Text(folder.name)
+                    .tint(isCurrent ? .secondary : .primary)
+                    .lineLimit(1)
+                
+                Spacer()
+                
+                if isCurrent {
+                    Text("current")
+                        .tint(.secondary)
+                } else {
+                    Image(systemName: "chevron.right")
+                        .font(.subheadline.bold())
+                        .tint(.secondary)
+                }
+            }
+        }
+        .disabled(isCurrent)
     }
     
     // MARK: - Actions
@@ -124,63 +158,72 @@ struct MoveToSheet: View {
     }
 }
 
-// MARK: - Move Folder Picker Row
-
-struct MoveFolderPickerRow: View {
+private struct MoveFolderPickerTreeRows: View {
     let folder: Folder
     let depth: Int
-    let currentNoteURL: URL
+    let currentFolderURL: URL
+    let gapWidth: CGFloat
+    let indentWidth: CGFloat
+    let folderIconWidth: CGFloat
     let onSelect: (Folder) -> Void
     
-    /// Check if this folder contains the note being moved
-    private var containsCurrentNote: Bool {
-        folder.url == currentNoteURL.deletingLastPathComponent()
-    }
-    
     var body: some View {
-        VStack(spacing: 0) {
-            // Folder row
-            Button {
-                onSelect(folder)
-            } label: {
-                HStack {
-                    Text(folder.name)
-                        .font(.custom("MonacoTTF", size: 16))
-                        .foregroundStyle(containsCurrentNote ? .secondary : .primary)
-                    
-                    if containsCurrentNote {
-                        Text("(current)")
-                            .font(.custom("MonacoTTF", size: 12))
-                            .foregroundStyle(.tertiary)
-                    }
-                    
-                    Spacer()
-                    
-                    Image(systemName: "chevron.right")
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
-                }
-                .padding()
-                .padding(.leading, CGFloat(depth) * 16)
-                .contentShape(Rectangle())
+        Group {
+            Section {
+                row(folder, depth: depth)
             }
-            .buttonStyle(.plain)
-            .disabled(containsCurrentNote)
+            .listRowSeparator(.hidden)
             
-            // Subfolders
             if !folder.subfolders.isEmpty {
                 ForEach(folder.subfolders) { subfolder in
-                    MoveFolderPickerRow(
+                    MoveFolderPickerTreeRows(
                         folder: subfolder,
                         depth: depth + 1,
-                        currentNoteURL: currentNoteURL,
+                        currentFolderURL: currentFolderURL,
+                        gapWidth: gapWidth,
+                        indentWidth: indentWidth,
+                        folderIconWidth: folderIconWidth,
                         onSelect: onSelect
                     )
                 }
             }
         }
-        .background(depth == 0 ? Color(.secondarySystemGroupedBackground) : Color.clear)
-        .clipShape(RoundedRectangle(cornerRadius: depth == 0 ? 12 : 0))
+    }
+    
+    private func row(_ folder: Folder, depth: Int) -> some View {
+        let isCurrent = (folder.url == currentFolderURL)
+        
+        return Button {
+            onSelect(folder)
+        } label: {
+            HStack(spacing: gapWidth) {
+                if depth > 0 {
+                    Spacer().frame(width: CGFloat(depth) * indentWidth)
+                }
+                
+                Image(systemName: "folder.fill")
+                    .font(.title3.weight(.medium))
+                    .tint(Color.blue.gradient)
+                    .frame(width: folderIconWidth)
+                    .padding(.leading, 8)
+                
+                Text(folder.name)
+                    .tint(isCurrent ? .secondary : .primary)
+                    .lineLimit(1)
+                
+                Spacer()
+                
+                if isCurrent {
+                    Text("current")
+                        .tint(.secondary)
+                } else {
+                    Image(systemName: "chevron.right")
+                        .font(.subheadline.bold())
+                        .tint(.secondary)
+                }
+            }
+        }
+        .disabled(isCurrent)
     }
 }
 

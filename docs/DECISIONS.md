@@ -123,3 +123,63 @@ Lowercase prioritizes iOS before macOS.
     - Forces clarity in core interactions
 - **Consequences**
     - macOS-specific workflows are postponed
+
+
+## 2026-01-10 — System Monospaced Font Over Custom `MonacoTTF`
+
+Lowercase uses the system font with monospaced design (via `.monospaced()` / monospaced font design) instead of the custom `MonacoTTF`.
+
+- **Context**
+    - `MonacoTTF` has readability issues at small sizes
+    - Lack of clean bold/italic variants makes hierarchy harder
+- **Why**
+    - System font is more legible across dynamic type sizes
+    - Bold/italic become available for hierarchy and emphasis
+    - Keeps the UI consistent with platform typography conventions
+- **Consequences**
+    - Typography is controlled via SwiftUI modifiers (not a bundled font)
+    - Visual identity comes from spacing, structure, and tone more than a custom typeface
+
+
+## 2026-01-10 — List/Form First, With Small Consistent Adjustments
+
+Lowercase prefers `List` and `Form` for most screens, with a small set of consistent tweaks (e.g. section spacing and bounce behavior).
+
+- **Context**
+    - Lists/forms are native, fast, and handle accessibility well
+    - Custom scroll layouts require more code and tend to drift across screens
+- **Why**
+    - Consistency across screens with minimal styling surface
+    - Better dynamic type behavior “for free”
+    - Lower maintenance cost
+- **Consequences**
+    - We standardize a few defaults (e.g. `.listSectionSpacing(8)`, `.scrollBounceBehavior(.basedOnSize)`)
+    - When we diverge, we do it intentionally and locally (not by introducing a large design system)
+
+
+## 2026-01-10 — Primary Actions Use Full-Width Glass Prominent Buttons
+
+Primary actions (especially in onboarding and creation flows) use a full-width “glass prominent” button style with bezel-aligned padding.
+
+- **Context**
+    - These flows have a single main action and should feel decisive
+    - iOS 26’s glass styles look great and feel native
+- **Why**
+    - Clear hierarchy: one obvious primary action
+    - Reduced layout variance across screens
+- **Consequences**
+    - We encapsulate the modifier combo to keep screens readable
+
+
+## 2026-01-10 — Home Presents Folders as List Sections
+
+Home displays folders as `List` sections (expand/collapse), with notes and nested folders shown as indented rows.
+
+- **Context**
+    - Hierarchy is the product (filesystem-first)
+    - “Folders as sections” reads naturally and scales with content
+- **Why**
+    - Fast scanning: section headers anchor the hierarchy
+    - Native list behavior + simple indentation yields clear structure
+- **Consequences**
+    - Home becomes a `List`-driven screen instead of a custom card layout

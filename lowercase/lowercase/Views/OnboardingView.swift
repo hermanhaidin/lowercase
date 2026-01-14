@@ -12,37 +12,27 @@ struct OnboardingView: View {
     
     var body: some View {
         NavigationStack(path: $navigationPath) {
-            VStack(spacing: 24) {
+            VStack {
                 Spacer()
                 
                 VStack(alignment: .leading, spacing: 16) {
-                    Text("your thoughts are yours...")
-                        .font(.custom("MonacoTTF", size: 18))
-                        .foregroundStyle(.primary)
+                    Text("# your thoughts are yours...")
                     
-                    Text("lowercase stores notes as files on your device")
-                        .font(.custom("MonacoTTF", size: 18))
-                        .foregroundStyle(.secondary)
+                    Text("~/lowercase stores notes as files on your device")
                     
                     Text("open them anywhere, even offline")
-                        .font(.custom("MonacoTTF", size: 18))
-                        .foregroundStyle(.secondary)
                 }
+                .lcMonospaced()
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal)
                 
                 Spacer()
                 
-                Button {
+                Button("Create New Folder", role: .confirm) {
                     navigationPath.append("createFolder")
-                } label: {
-                    Text("Create New Folder")
-                        .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-                .padding(.horizontal)
+                .lcPrimaryActionButton()
             }
+            .padding(.horizontal, LCMetrics.bezelPadding)
             .navigationDestination(for: String.self) { destination in
                 if destination == "createFolder" {
                     CreateFolderView()
