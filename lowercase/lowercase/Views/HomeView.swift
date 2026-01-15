@@ -398,7 +398,7 @@ private struct HomeFolderTreeRows<FolderMenu: View, NoteMenu: View>: View {
             .padding(.vertical, 10)
             .padding(.horizontal, 8)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .contentShape(Rectangle())
+            .contentShape(.rect)
         }
         .buttonStyle(NoHighlightButtonStyle())
     }

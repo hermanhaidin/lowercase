@@ -39,7 +39,7 @@ struct EditorView: View {
     
     var body: some View {
         TextEditor(text: $content)
-            .padding(.horizontal, 16)
+            .padding(.horizontal)
             .lcMonospaced()
             .font(.callout)
             .scrollContentBackground(.hidden)

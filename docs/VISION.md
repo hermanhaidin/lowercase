@@ -88,13 +88,6 @@ We keep it dumb:
 
 ## 6. Editor Design & Constraints
 
-- Style
-    - All UI copy lowercase
-    - Menu items, empty states, buttons, settings labels
-    - Example: "new note", "search notes", "no notes yet"
-- Typography
-    - Custom pixel / bitmap inspired monospace font
-    - Tuned sizes per platform to preserve crisp rendering
 - Editor behavior
     - Auto-pair `() [] {} "" ''`
     - No auto-capitalize first letter of line
