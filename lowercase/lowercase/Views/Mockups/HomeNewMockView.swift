@@ -344,57 +344,60 @@ struct HomeNewMockView: View {
             .monospaced()
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button {
-                        // Open sort menu
-                    } label: {
-                        HStack(spacing: gapWidth) {
-                            Image(systemName: "circle.fill")
-                                .font(.caption2)
-                                .foregroundStyle(.green.gradient)
-                            
-                            Text("Local")
-                            
-                            Image(systemName: "chevron.up.chevron.down")
-                                .font(.caption2.bold())
-                                .foregroundStyle(.secondary)
-                        }
+                    Button("edit") {
+                        // Trigger edit mode for selecting folders and files
                     }
+                    .fontDesign(.monospaced)
                 }
                 
                 ToolbarItem {
                     Button {
                         // Expand all folders
                     } label: {
-                        Image(systemName: "arrow.up.and.line.horizontal.and.arrow.down")
+                        Image(systemName: "arrow.up.and.down")
+                            .font(.caption.bold())
                     }
                 }
                 
-                // You may use settings only once in a while
-                // That's why settings are hidden behind ellipsis
+                ToolbarSpacer(.fixed)
+                
                 ToolbarItem {
-                    Button {
-                        // Open menu with:
-                        // - Select
-                        // - Settings
-                        // - Sort By
-                        // "Sort By" opens a nested menu with sort options
-                    } label: {
-                        Image(systemName: "ellipsis")
+                    Button("sort") {
+                        // Open sort sheet
                     }
+                    .fontDesign(.monospaced)
                 }
                 
                 // MARK: Add note button is part of toolbar
                 ToolbarItemGroup(placement: .bottomBar) {
+                    Button {
+                        // Open sort menu
+                    } label: {
+                        HStack(spacing: gapWidth) {
+                            Image(systemName: "circle.fill")
+                                .font(.caption.bold())
+                                .foregroundStyle(.green.gradient)
+                            
+                            Text("local")
+                                .fontDesign(.monospaced)
+                            
+                            Image(systemName: "chevron.up.chevron.down")
+                                .font(.caption.bold())
+                                .foregroundStyle(.secondary)
+//                                .foregroundStyle(.secondary)
+                        }
+                    }
                     
                     Spacer()
                     
-                    Button("Add Note", systemImage: "plus", role: .confirm) {
+                    Button(role: .confirm) {
                         // Pushes new note view with folder selection instead of showing it in sheet
+                    } label: {
+                        Image(systemName: "plus")
+                            .font(.caption.bold())
                     }
                 }
             }
-            // Total number of folders and notes will be revealed when search screen appears
-            .searchable(text: $searchText)
         }
     }
 }

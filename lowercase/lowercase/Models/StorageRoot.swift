@@ -26,9 +26,9 @@ enum StorageRoot: String, CaseIterable, Identifiable {
     var shortName: String {
         switch self {
         case .local:
-            return "Local"
+            return "local"
         case .icloud:
-            return "iCloud"
+            return "icloud"
         }
     }
     

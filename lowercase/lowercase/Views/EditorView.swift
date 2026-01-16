@@ -69,12 +69,7 @@ struct EditorView: View {
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
-            .navigationBarBackButtonHidden(true)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Back", systemImage: "chevron.left", action: handleBackNavigation)
-                }
-            }
+//            .navigationBarBackButtonHidden(true)
             .alert("Rename", isPresented: $showingRenameAlert) {
                 TextField("Filename", text: $newFilename)
                 Button("Cancel", role: .cancel) { }
@@ -210,11 +205,6 @@ struct EditorView: View {
     }
     
     // MARK: - Back Navigation
-    
-    private func handleBackNavigation() {
-        finalizeExitIfNeeded()
-        dismiss()
-    }
     
     private func finalizeExitIfNeeded() {
         guard !didFinalizeExit else { return }

@@ -50,12 +50,7 @@ struct CreateFolderView: View {
         .lcFormDefaults()
         .navigationTitle("New Folder")
         .navigationBarTitleDisplayMode(.inline)
-        .navigationBarBackButtonHidden(true)
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("Back", systemImage: "chevron.left") { dismiss() }
-            }
-        }
+//        .navigationBarBackButtonHidden(true)
         .safeAreaBar(edge: .bottom) {
             Button("Create", role: .confirm) { createFolder() }
                 .lcPrimaryActionButton()

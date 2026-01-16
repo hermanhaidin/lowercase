@@ -27,6 +27,7 @@ If a suggestion violates these rules, do not propose it.
 - `@Observable` over `ObservableObject`
 - `Button` over `onTapGesture`
 - no `UIScreen.main.bounds`
+- do not break views up using computed properties; place them into new `View` structs instead
 - recursive `View` structs over recursive functions returning `some View` for tree UIs
 - place view logic into view models or similar, so it can be tested
 - no `AnyView` unless required

@@ -15,6 +15,7 @@ struct HomeView: View {
     
     @State private var navigationPath = NavigationPath()
     @State private var showingSettings = false
+    @State private var showingSortSheet = false
     
     // Context menu state
     @State private var itemToRename: URL?
@@ -45,11 +46,15 @@ struct HomeView: View {
         NavigationStack(path: $navigationPath) {
             contentList
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) { storageSwitcher }
-                ToolbarItem(placement: .topBarTrailing) { topMenu }
+                // top bar
+                ToolbarItem(placement: .topBarLeading) { editButton }
+                ToolbarItem { expandCollapseButton }
+                ToolbarSpacer(.fixed)
+                ToolbarItem { sortButton }
                 
-                ToolbarItemGroup(placement: .bottomBar) {
-                    Spacer()
+                // bottom bar
+                ToolbarItem(placement: .bottomBar) { storageSwitcher }
+                ToolbarItem(placement: .bottomBar) {
                     Button("Add Note", systemImage: "plus", role: .confirm) {
                         navigationPath.append(HomeDestination.newNote)
                     }
@@ -70,6 +75,14 @@ struct HomeView: View {
             }
             .sheet(isPresented: $showingSettings) {
                 SettingsView()
+            }
+            .sheet(isPresented: $showingSortSheet) {
+                SortSheetView(selectedOption: appState.sortOption) { option in
+                    applySort(option)
+                    showingSortSheet = false
+                }
+                    .presentationDetents([.medium])
+                    .presentationDragIndicator(.visible)
             }
             .sheet(item: $moveTarget) { target in
                 MoveToSheet(noteURL: target.url)
@@ -230,9 +243,7 @@ struct HomeView: View {
         NavigationLink(value: note) {
             HStack(spacing: gapWidth) {
                 if isOrphan {
-                    Image(systemName: "questionmark")
-                        .font(.subheadline.bold())
-                        .foregroundStyle(.secondary)
+                    Spacer()
                         .frame(width: chevronIconWidth)
                 } else {
                     Spacer()
@@ -257,27 +268,33 @@ struct HomeView: View {
         .buttonStyle(.plain)
     }
     
+    // MARK: - Toolbar Buttons
+    
+    private var editButton: some View {
+        Button("edit") { }
+            .fontDesign(.monospaced)
+    }
+    
+    private var expandCollapseButton: some View {
+        Button {
+            toggleAllFolders()
+        } label: {
+            Image(systemName: areAllFoldersExpanded ? "arrow.down.and.line.horizontal.and.arrow.up" : "arrow.up.and.down")
+                .font(.caption.bold())
+        }
+    }
+    
+    private var sortButton: some View {
+        Button("sort") { showingSortSheet = true }
+            .fontDesign(.monospaced)
+    }
+    
     // MARK: - Storage Switcher
     
     private var storageSwitcher: some View {
         Menu {
-            // Current roots
-            ForEach(StorageRoot.allCases) { root in
-                if root.isAvailable(icloudContainer: nil) { // TODO: Pass actual container
-                    Button {
-                        appState.currentRoot = root
-                        fileStore.currentRoot = root
-                        fileStore.reload()
-                    } label: {
-                        HStack {
-                            Text(root.displayName)
-                            if root == appState.currentRoot {
-                                Image(systemName: "checkmark")
-                            }
-                        }
-                    }
-                }
-            }
+            Button("On My iPhone") { }
+            Button("Settings") { showingSettings = true }
         } label: {
             HStack(spacing: gapWidth) {
                 Image(systemName: "circle.fill")
@@ -285,6 +302,7 @@ struct HomeView: View {
                     .foregroundStyle(.green.gradient)
                 
                 Text(appState.currentRoot.shortName)
+                    .fontDesign(.monospaced)
                 
                 Image(systemName: "chevron.up.chevron.down")
                     .font(.caption2.bold())
@@ -292,28 +310,37 @@ struct HomeView: View {
             }
         }
     }
+
+    private func applySort(_ option: SortOption) {
+        appState.sortOption = option
+        fileStore.sort(by: option)
+    }
     
-    private var topMenu: some View {
-        Menu {
-            Button("Settings") { showingSettings = true }
-            
-            Menu("Sort by") {
-                ForEach(SortOption.allCases) { option in
-                    Button {
-                        appState.sortOption = option
-                        fileStore.sort(by: option)
-                    } label: {
-                        HStack {
-                            Text(option.displayName)
-                            if option == appState.sortOption {
-                                Image(systemName: "checkmark")
-                            }
-                        }
-                    }
+    private var areAllFoldersExpanded: Bool {
+        let folderURLs = allFolderURLs(from: fileStore.folders)
+        return !folderURLs.isEmpty && folderURLs.allSatisfy { fileStore.isFolderExpanded($0) }
+    }
+    
+    private func toggleAllFolders() {
+        let folderURLs = allFolderURLs(from: fileStore.folders)
+        guard !folderURLs.isEmpty else { return }
+        
+        withAnimation(.easeInOut(duration: 0.2)) {
+            if areAllFoldersExpanded {
+                for url in folderURLs where fileStore.isFolderExpanded(url) {
+                    fileStore.toggleFolderExpansion(url)
+                }
+            } else {
+                for url in folderURLs where !fileStore.isFolderExpanded(url) {
+                    fileStore.toggleFolderExpansion(url)
                 }
             }
-        } label: {
-            Image(systemName: "ellipsis")
+        }
+    }
+    
+    private func allFolderURLs(from folders: [Folder]) -> [URL] {
+        folders.flatMap { folder in
+            [folder.url] + allFolderURLs(from: folder.subfolders)
         }
     }
 }

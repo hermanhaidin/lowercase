@@ -14,102 +14,105 @@ struct NewNoteMockView: View {
     
     var body: some View {
         NavigationStack {
-            List {
-                // Every folder is a section in a list
-                
-                // MARK: Create new folder button as section
-                Section {
+            ScrollView {
+                VStack(spacing: 0) {
                     Button {
-                        // Change button to a text field
+                        // open editor
                     } label: {
                         HStack(spacing: gapWidth) {
                             Image(systemName: "plus")
+                                .fontWeight(.medium)
+                                .foregroundStyle(.tint)
                                 .frame(width: folderIconWidth)
-                                .padding(.leading, 8)
                             
                             Text("new folder")
+                                .foregroundStyle(.tint)
+                                .lineLimit(1)
                         }
+                        .padding(.vertical, 10)
+                        .padding(.horizontal, 8)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(.rect)
                     }
-                }
-                .listRowBackground(Color.clear)
-                
-                // MARK: Collapsed folder
-                Section {
+                    .buttonStyle(.plain)
+                    
                     Button {
-                        // Expand or collapse folder
+                        // open editor
                     } label: {
                         HStack(spacing: gapWidth) {
                             Image(systemName: "folder.fill")
                                 .font(.title3.weight(.medium))
-                                .tint(Color.blue.gradient)
+                                .foregroundStyle(Color.blue.gradient)
                                 .frame(width: folderIconWidth)
-                                .padding(.leading, 8)
                             
                             Text("templates")
-                                .tint(.primary)
                                 .lineLimit(1)
                             
                             Spacer()
                             
                             Image(systemName: "chevron.right")
                                 .font(.subheadline.bold())
-                                .tint(.secondary)
+                                .foregroundStyle(.secondary)
                         }
+                        .padding(.vertical, 10)
+                        .padding(.horizontal, 8)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(.rect)
                     }
-                }
-                
-                // MARK: Collapsed folder
-                Section {
+                    .buttonStyle(.plain)
+                    
                     Button {
-                        // Expand or collapse folder
+                        // open editor
                     } label: {
                         HStack(spacing: gapWidth) {
                             Image(systemName: "folder.fill")
                                 .font(.title3.weight(.medium))
-                                .tint(Color.blue.gradient)
+                                .foregroundStyle(Color.blue.gradient)
                                 .frame(width: folderIconWidth)
-                                .padding(.leading, 8)
                             
                             Text("daily")
-                                .tint(.primary)
                                 .lineLimit(1)
                             
                             Spacer()
                             
                             Image(systemName: "chevron.right")
                                 .font(.subheadline.bold())
-                                .tint(.secondary)
+                                .foregroundStyle(.secondary)
                         }
+                        .padding(.vertical, 10)
+                        .padding(.horizontal, 8)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(.rect)
                     }
-                }
-                
-                // MARK: Expanded folder with subfolders
-                Section {
+                    .buttonStyle(.plain)
+                    
                     Button {
-                        // Expand or collapse folder
+                        // open editor
                     } label: {
                         HStack(spacing: gapWidth) {
                             Image(systemName: "folder.fill")
                                 .font(.title3.weight(.medium))
-                                .tint(Color.blue.gradient)
+                                .foregroundStyle(Color.blue.gradient)
                                 .frame(width: folderIconWidth)
-                                .padding(.leading, 8)
                             
                             Text("projects")
-                                .tint(.primary)
                                 .lineLimit(1)
                             
                             Spacer()
                             
                             Image(systemName: "chevron.right")
                                 .font(.subheadline.bold())
-                                .tint(.secondary)
+                                .foregroundStyle(.secondary)
                         }
+                        .padding(.vertical, 10)
+                        .padding(.horizontal, 8)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(.rect)
                     }
+                    .buttonStyle(.plain)
                     
-                    // Folder row
                     Button {
-                        // Expand or collapse folder
+                        // open editor
                     } label: {
                         HStack(spacing: gapWidth) {
                             Spacer()
@@ -117,54 +120,107 @@ struct NewNoteMockView: View {
                             
                             Image(systemName: "folder.fill")
                                 .font(.title3.weight(.medium))
-                                .tint(Color.blue.gradient)
+                                .foregroundStyle(Color.blue.gradient)
                                 .frame(width: folderIconWidth)
-                                .padding(.leading, 8)
                             
                             Text("100-days-of-swift-ui")
-                                .tint(.primary)
                                 .lineLimit(1)
                             
                             Spacer()
                             
                             Image(systemName: "chevron.right")
                                 .font(.subheadline.bold())
-                                .tint(.secondary)
+                                .foregroundStyle(.secondary)
                         }
+                        .padding(.vertical, 10)
+                        .padding(.horizontal, 8)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
+                    .buttonStyle(.plain)
                     
-                    // Folder row
                     Button {
-                        // Expand or collapse folder
+                        // open editor
                     } label: {
-                        HStack(spacing: gapWidth) {
+                        HStack(spacing: gapWidth) {                            
                             Spacer()
                                 .frame(width: indentWidth)
                             
                             Image(systemName: "folder.fill")
                                 .font(.title3.weight(.medium))
-                                .tint(Color.blue.gradient)
+                                .foregroundStyle(Color.blue.gradient)
                                 .frame(width: folderIconWidth)
-                                .padding(.leading, 8)
                             
                             Text("app-ideas")
-                                .tint(.primary)
                                 .lineLimit(1)
                             
                             Spacer()
                             
                             Image(systemName: "chevron.right")
                                 .font(.subheadline.bold())
-                                .tint(.secondary)
+                                .foregroundStyle(.secondary)
                         }
+                        .padding(.vertical, 10)
+                        .padding(.horizontal, 8)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(.rect)
                     }
+                    .buttonStyle(.plain)
+                    
+                    Button {
+                        // open editor
+                    } label: {
+                        HStack(spacing: gapWidth) {
+                            Image(systemName: "folder.fill")
+                                .font(.title3.weight(.medium))
+                                .foregroundStyle(Color.blue.gradient)
+                                .frame(width: folderIconWidth)
+                            
+                            Text("taste")
+                                .lineLimit(1)
+                            
+                            Spacer()
+                            
+                            Image(systemName: "chevron.right")
+                                .font(.subheadline.bold())
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(.vertical, 10)
+                        .padding(.horizontal, 8)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(.rect)
+                    }
+                    .buttonStyle(.plain)
+                    
+                    Button {
+                        // open editor
+                    } label: {
+                        HStack(spacing: gapWidth) {
+                            Image(systemName: "folder.fill")
+                                .font(.title3.weight(.medium))
+                                .foregroundStyle(Color.blue.gradient)
+                                .frame(width: folderIconWidth)
+                            
+                            Text("archive")
+                                .lineLimit(1)
+                            
+                            Spacer()
+                            
+                            Image(systemName: "chevron.right")
+                                .font(.subheadline.bold())
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(.vertical, 10)
+                        .padding(.horizontal, 8)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(.rect)
+                    }
+                    .buttonStyle(.plain)
                 }
-                .listRowSeparator(.hidden)
             }
             .monospaced()
-            .navigationTitle("New Note")
+            .contentMargins(.leading, 20)
+            .contentMargins([.top, .trailing, .bottom], 16)
             .navigationBarTitleDisplayMode(.inline)
-            .listSectionSpacing(8)
             .scrollBounceBehavior(.basedOnSize)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -173,13 +229,18 @@ struct NewNoteMockView: View {
                     }
                 }
                 
+                ToolbarItem(placement: .principal) {
+                    Text("select folder")
+                        .foregroundStyle(.secondary)
+                        .monospaced()
+                }
+                
                 ToolbarItem {
-                    Button {
+                    Button("sort") {
                         // Open sort menu
                         // Preserve sort order from home view
-                    } label: {
-                        Image(systemName: "ellipsis")
                     }
+                    .monospaced()
                 }
             }
         }

@@ -41,14 +41,19 @@ Running list of product + technical decisions. Keep entries short.
 
 ## UI style
 
+- Everything in lowercase (UI strings, titles)
 - Folder names + filenames use monospaced type
-- App chrome (toolbar, safe area bar, context menus) uses the system font
-- Prefer system monospaced over bundling `MonacoTTF`
+- App chrome (toolbar, safe area bar, menus) use monospace type as well
+- System monospaced over bundling `MonacoTTF`
 - Use `ScaledMetric` over hardcoded padding; plain `padding()` / `padding(.horizontal)` is fine when it stays stable
 - Multiple app color themes over time
 - Settings are presented as a sheet
 - Search view shows total folder + file counts (not shown by default elsewhere)
 - Onboarding CTA is a full-width glass button: `buttonSizing(.flexible)` + `buttonStyle(.glassProminent)` + `controlSize(.large)`
+
+## Navigation
+
+- Preserve the system back swipe gesture; avoid custom back buttons that disable it
 
 ## Implementation notes
 
