@@ -5,17 +5,18 @@
 
 import SwiftUI
 
-enum HomeDestination: Hashable {
-    case newNote
-}
-
 struct HomeView: View {
     @Environment(FileStore.self) private var fileStore
     @Environment(AppState.self) private var appState
     
-    @State private var navigationPath = NavigationPath()
-    @State private var showingSettings = false
+    @State private var showingNewNote = false
+    @State private var showingSettingsDestination = false
+    @State private var pendingNoteDestination: NoteDestination?
     @State private var showingSortSheet = false
+    @State private var showingStorageSheet = false
+    @State private var pendingSettingsFromStorage = false
+    @State private var quickActionsTarget: QuickActionsTarget?
+    @State private var pendingMoveTarget: MoveTarget?
     
     // Context menu state
     @State private var itemToRename: URL?
@@ -37,13 +38,37 @@ struct HomeView: View {
     }
     
     @State private var moveTarget: MoveTarget?
+    
+    private enum QuickActionsKind: Equatable {
+        case folder
+        case note
+    }
+    
+    private struct QuickActionsTarget: Identifiable, Equatable {
+        let id: URL
+        let url: URL
+        let kind: QuickActionsKind
+        let name: String
+        
+        init(url: URL, kind: QuickActionsKind, name: String) {
+            self.id = url
+            self.url = url
+            self.kind = kind
+            self.name = name
+        }
+    }
+    
+    private struct NoteDestination: Identifiable, Hashable {
+        let note: Note
+        var id: URL { note.url }
+    }
 
     @ScaledMetric private var gapWidth = 8.0
     @ScaledMetric private var chevronIconWidth = 16.0
     @ScaledMetric private var folderIconWidth = 20.0
     
     var body: some View {
-        NavigationStack(path: $navigationPath) {
+        NavigationStack {
             contentList
             .toolbar {
                 // top bar
@@ -56,25 +81,21 @@ struct HomeView: View {
                 ToolbarItem(placement: .bottomBar) { storageSwitcher }
                 ToolbarItem(placement: .bottomBar) {
                     Button("Add Note", systemImage: "plus", role: .confirm) {
-                        navigationPath.append(HomeDestination.newNote)
+                        showingNewNote = true
                     }
                 }
             }
-            .navigationDestination(for: Note.self) { note in
-                EditorView(note: note)
-            }
-            .navigationDestination(for: HomeDestination.self) { destination in
-                switch destination {
-                case .newNote:
-                    NewNoteView { note in
-                        // Replace NewNoteView with EditorView so Back returns to Home.
-                        navigationPath.removeLast()
-                        navigationPath.append(note)
-                    }
+            .navigationDestination(isPresented: $showingNewNote) {
+                NewNoteView { note in
+                    pendingNoteDestination = NoteDestination(note: note)
+                    showingNewNote = false
                 }
             }
-            .sheet(isPresented: $showingSettings) {
+            .navigationDestination(isPresented: $showingSettingsDestination) {
                 SettingsView()
+            }
+            .navigationDestination(item: $pendingNoteDestination) { destination in
+                EditorView(note: destination.note)
             }
             .sheet(isPresented: $showingSortSheet) {
                 SortSheetView(selectedOption: appState.sortOption) { option in
@@ -83,6 +104,28 @@ struct HomeView: View {
                 }
                     .presentationDetents([.medium])
                     .presentationDragIndicator(.visible)
+            }
+            .sheet(isPresented: $showingStorageSheet) {
+                StorageSwitcherSheetView(
+                    selectedRoot: appState.currentRoot,
+                    onSelectLocal: selectLocalRoot,
+                    onOpenSettings: {
+                        pendingSettingsFromStorage = true
+                        showingStorageSheet = false
+                    }
+                )
+                .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
+            }
+            .sheet(item: $quickActionsTarget) { target in
+                QuickActionsSheetView(
+                    canMove: target.kind == .note,
+                    onRename: { handleRename(for: target) },
+                    onMove: { handleMove(for: target) },
+                    onDelete: { handleDelete(for: target) }
+                )
+                .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
             }
             .sheet(item: $moveTarget) { target in
                 MoveToSheet(noteURL: target.url)
@@ -112,6 +155,16 @@ struct HomeView: View {
             }
             .onAppear {
                 fileStore.reload()
+            }
+            .onChange(of: quickActionsTarget) { _, newValue in
+                guard newValue == nil, let pendingMoveTarget else { return }
+                moveTarget = pendingMoveTarget
+                self.pendingMoveTarget = nil
+            }
+            .onChange(of: showingStorageSheet) { _, newValue in
+                guard newValue == false, pendingSettingsFromStorage else { return }
+                pendingSettingsFromStorage = false
+                showingSettingsDestination = true
             }
         }
     }
@@ -159,54 +212,24 @@ struct HomeView: View {
     
     // MARK: - Context Menu Builders
     
-    func folderContextMenu(for folder: Folder) -> some View {
-        Group {
-            Button {
-                itemToRename = folder.url
-                isRenamingFolder = true
-                newName = folder.name
-                showingRenameAlert = true
-            } label: {
-                Label("Rename", systemImage: "pencil")
-            }
-            
-            Divider()
-            
-            Button(role: .destructive) {
-                itemToDelete = folder.url
-                showingDeleteConfirmation = true
-            } label: {
-                Label("Delete", systemImage: "trash")
-            }
-        }
+    private func handleRename(for target: QuickActionsTarget) {
+        itemToRename = target.url
+        isRenamingFolder = target.kind == .folder
+        newName = target.name
+        showingRenameAlert = true
+        quickActionsTarget = nil
     }
     
-    func noteContextMenu(for note: Note) -> some View {
-        Group {
-            Button {
-                itemToRename = note.url
-                isRenamingFolder = false
-                newName = note.filename
-                showingRenameAlert = true
-            } label: {
-                Label("Rename", systemImage: "pencil")
-            }
-            
-            Button {
-                moveTarget = MoveTarget(note.url)
-            } label: {
-                Label("Move to...", systemImage: "folder")
-            }
-            
-            Divider()
-            
-            Button(role: .destructive) {
-                itemToDelete = note.url
-                showingDeleteConfirmation = true
-            } label: {
-                Label("Delete", systemImage: "trash")
-            }
-        }
+    private func handleMove(for target: QuickActionsTarget) {
+        guard target.kind == .note else { return }
+        pendingMoveTarget = MoveTarget(target.url)
+        quickActionsTarget = nil
+    }
+    
+    private func handleDelete(for target: QuickActionsTarget) {
+        itemToDelete = target.url
+        showingDeleteConfirmation = true
+        quickActionsTarget = nil
     }
     
     // MARK: - Content List
@@ -223,14 +246,17 @@ struct HomeView: View {
                         folderIconWidth: folderIconWidth,
                         isExpanded: fileStore.isFolderExpanded,
                         onToggleExpanded: fileStore.toggleFolderExpansion,
-                        folderContextMenu: folderContextMenu(for:),
-                        noteContextMenu: noteContextMenu(for:)
+                        onFolderLongPress: { showQuickActions(for: $0) },
+                        onNoteLongPress: { showQuickActions(for: $0) }
                     )
                 }
                 
                 ForEach(fileStore.orphanNotes) { note in
                     noteRow(note, depth: 0, isOrphan: true)
-                        .contextMenu { noteContextMenu(for: note) }
+                        .simultaneousGesture(
+                            LongPressGesture(minimumDuration: 0.4)
+                                .onEnded { _ in showQuickActions(for: note) }
+                        )
                 }
             }
         }
@@ -240,7 +266,9 @@ struct HomeView: View {
     }
     
     private func noteRow(_ note: Note, depth: Int, isOrphan: Bool) -> some View {
-        NavigationLink(value: note) {
+        NavigationLink {
+            EditorView(note: note)
+        } label: {
             HStack(spacing: gapWidth) {
                 if isOrphan {
                     Spacer()
@@ -264,6 +292,7 @@ struct HomeView: View {
             .padding(.vertical, 10)
             .padding(.horizontal, 8)
             .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(.rect)
         }
         .buttonStyle(.plain)
     }
@@ -292,9 +321,8 @@ struct HomeView: View {
     // MARK: - Storage Switcher
     
     private var storageSwitcher: some View {
-        Menu {
-            Button("On My iPhone") { }
-            Button("Settings") { showingSettings = true }
+        Button {
+            showingStorageSheet = true
         } label: {
             HStack(spacing: gapWidth) {
                 Image(systemName: "circle.fill")
@@ -314,6 +342,20 @@ struct HomeView: View {
     private func applySort(_ option: SortOption) {
         appState.sortOption = option
         fileStore.sort(by: option)
+    }
+    
+    private func selectLocalRoot() {
+        appState.currentRoot = .local
+        fileStore.currentRoot = .local
+        fileStore.reload()
+    }
+    
+    private func showQuickActions(for folder: Folder) {
+        quickActionsTarget = QuickActionsTarget(url: folder.url, kind: .folder, name: folder.name)
+    }
+    
+    private func showQuickActions(for note: Note) {
+        quickActionsTarget = QuickActionsTarget(url: note.url, kind: .note, name: note.filename)
     }
     
     private var areAllFoldersExpanded: Bool {
@@ -351,7 +393,7 @@ private struct NoHighlightButtonStyle: ButtonStyle {
     }
 }
 
-private struct HomeFolderTreeRows<FolderMenu: View, NoteMenu: View>: View {
+private struct HomeFolderTreeRows: View {
     let folder: Folder
     let depth: Int
     let gapWidth: CGFloat
@@ -359,22 +401,30 @@ private struct HomeFolderTreeRows<FolderMenu: View, NoteMenu: View>: View {
     let folderIconWidth: CGFloat
     let isExpanded: (URL) -> Bool
     let onToggleExpanded: (URL) -> Void
-    @ViewBuilder let folderContextMenu: (Folder) -> FolderMenu
-    @ViewBuilder let noteContextMenu: (Note) -> NoteMenu
+    let onFolderLongPress: (Folder) -> Void
+    let onNoteLongPress: (Note) -> Void
     
     var body: some View {
         Group {
             folderHeaderRow(folder, depth: depth)
-                .contextMenu { folderContextMenu(folder) }
+                .simultaneousGesture(
+                    LongPressGesture(minimumDuration: 0.4)
+                        .onEnded { _ in onFolderLongPress(folder) }
+                )
             
             if isExpanded(folder.url) {
                 VStack(spacing: 0) {
                     ForEach(folder.notes) { note in
-                        NavigationLink(value: note) {
+                        NavigationLink {
+                            EditorView(note: note)
+                        } label: {
                             noteRowContent(note, depth: depth + 1)
                         }
                         .buttonStyle(.plain)
-                        .contextMenu { noteContextMenu(note) }
+                        .simultaneousGesture(
+                            LongPressGesture(minimumDuration: 0.4)
+                                .onEnded { _ in onNoteLongPress(note) }
+                        )
                     }
                     
                     ForEach(folder.subfolders) { subfolder in
@@ -386,8 +436,8 @@ private struct HomeFolderTreeRows<FolderMenu: View, NoteMenu: View>: View {
                             folderIconWidth: folderIconWidth,
                             isExpanded: isExpanded,
                             onToggleExpanded: onToggleExpanded,
-                            folderContextMenu: folderContextMenu,
-                            noteContextMenu: noteContextMenu
+                            onFolderLongPress: onFolderLongPress,
+                            onNoteLongPress: onNoteLongPress
                         )
                     }
                 }
@@ -450,6 +500,7 @@ private struct HomeFolderTreeRows<FolderMenu: View, NoteMenu: View>: View {
         .padding(.vertical, 10)
         .padding(.horizontal, 8)
         .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(.rect)
     }
 }
 

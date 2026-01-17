@@ -22,13 +22,18 @@ If a suggestion violates these rules, do not propose it.
 
 ## SwiftUI Correctness
 
+- filter text-based user input using `localizedStandardContains()`
 - `foregroundStyle` over `foregroundColor`
+- `clipShape(.rect(cornerRadius:))` over `cornerRadius()`
 - `NavigationStack` over `NavigationView`
+- preserve the system back swipe gesture
 - `@Observable` over `ObservableObject`
 - `Button` over `onTapGesture`
+- `Task.sleep(for:)` over `Task.sleep(nanoseconds:)`
 - no `UIScreen.main.bounds`
-- do not break views up using computed properties; place them into new `View` structs instead
-- recursive `View` structs over recursive functions returning `some View` for tree UIs
+- `View` structs over computed properties
+- `View` structs over functions returning `some View`
+- `Dynamic Type` over specific font sizes
 - place view logic into view models or similar, so it can be tested
 - no `AnyView` unless required
 

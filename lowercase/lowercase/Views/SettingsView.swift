@@ -7,7 +7,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @Environment(AppState.self) private var appState
-    @Environment(\.dismiss) private var dismiss
+//    @Environment(\.dismiss) private var dismiss
     
     var body: some View {
         @Bindable var appState = appState
@@ -25,12 +25,17 @@ struct SettingsView: View {
                 }
             }
             .lcFormDefaults()
-            .navigationTitle("Settings")
+//            .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Close", systemImage: "xmark") { dismiss() }
+                ToolbarItem(placement: .principal) {
+                    Text("settings")
+                        .foregroundStyle(.secondary)
+                        .monospaced()
                 }
+//                ToolbarItem(placement: .cancellationAction) {
+//                    Button("Close", systemImage: "xmark") { dismiss() }
+//                }
             }
         }
         // Apply inside the sheet so appearance updates immediately while Settings is presented.

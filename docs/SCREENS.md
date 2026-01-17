@@ -203,20 +203,47 @@ This prevents accumulation of empty untitled notes from accidental taps.
 ```
 app launch
 │
-├─ (no directory exists) → Onboarding
-│   └─ Create Folder → Home
+├─ (no directory exists) → onboarding
+│   └─ create folder → home
 │
-└─ (directory exists) → Home
-    ├─ tap file → Editor
-    │   └─ Back → Home
-    ├─ tap `+` → New Note (pushed)
-    │   ├─ tap folder → Editor (new note)
-    │   └─ tap `new folder` → create folder → Editor (new note)
-    ├─ tap Settings → Settings
-    │   └─ Back → Home
-    ├─ tap `...` → Sort menu
-    ├─ tap switcher → switch directory / create directory
-    └─ long-press → context menu (Rename / Move to... / Delete)
+└─ (directory exists) → home
+    ├─ tap file → editor (pushed)
+    │   └─ tap back → home
+    ├─ long-press file → quick actions: rename, move to, delete (sheet medium detent)
+    │   ├─ tap rename → filename (inline)
+    │   ├─ tap move to → move to (sheet)
+    │   │   ├─ tap new folder → create folder (inline) → home (note moved)
+    │   │   ├─ tap folder → home (note moved)
+    │   │   └─ tap cancel, swipe down → home
+    │   └─ tap delete → delete note (sheet medium detent)
+    │       ├─ tap delete and don't ask again → home (note deleted)
+    │       ├─ tap delete → home (note deleted)
+    │       └─ tap cancel, scrim, swipe down → home
+    ├─ tap expand / collapse → expand / collapse all folders
+    ├─ tap sort → sort options: name, modified, created (sheet medium detent)
+    │   ├─ tap sort option → home (sort applied)
+    │   └─ tap scrim, swipe down → home
+    ├─ tap storage switcher → select storage (sheet medium detent)
+    │   ├─ tap directory (on my iphone), scrim, swipe down → home
+    │   └─ tap settings → settings (pushed)
+    │       └─ tap back → home
+    └─ tap `+` → select folder (pushed)
+        ├─ tap new folder → create folder (inline) → editor (pushed, keyboard up)
+        └─ tap folder → editor (pushed, keyboard up)
+            ├─ tap back → home
+            └─ tap ellipsis → quick actions: rename, move to, delete (sheet medium detent)
+                ├─ tap rename → filename (sheet, keyboard up)
+                │   ├─ tap save → editor (new name in principal title, keyboard down)
+                │   └─ tap cancel, scrim, swipe down → editor (keyboard down)
+                ├─ tap move to → move to (sheet)
+                │   ├─ tap new folder → create folder (inline) → editor (note moved, keyboard down)
+                │   ├─ tap folder → editor (note moved, keyboard down)
+                │   └─ tap cancel, swipe down → editor (keyboard down)
+                └─ tap delete → delete note (sheet medium detent)
+                    ├─ tap delete and don't ask again → home (note deleted)
+                    ├─ tap delete → home (note deleted)
+                    └─ tap cancel, scrim, swipe down → editor (keyboard down)
+            
 ```
 
 
@@ -261,11 +288,4 @@ app launch
 - v0 targets iOS only
 - macOS and iPadOS (v2+) will feature split view for two notes side-by-side
 - Users should enable "keep downloaded" for iCloud folders to ensure offline access
-
-
-## Typography Notes
-
-- **Chrome UI (v0):** Normal case for buttons, titles, menu items ("Settings", "Back", "New Folder")
-- **Content text:** system font with monospaced design
-- **Rationale:** System monospaced improves legibility and supports emphasis (bold/italic) when needed.
 

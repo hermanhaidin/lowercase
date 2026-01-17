@@ -26,12 +26,12 @@ Running list of product + technical decisions. Keep entries short.
 - No pressed highlight on folder rows
 - Make the whole folder row tappable via `contentShape(.rect)`
 - Show orphan notes below folders on Home
+- Long-press folder or note file shows a sheet with quick actions
 
 ## Editor
 
 - No live preview (for now)
 - In-editor typing: `autocorrectionDisabled()` + `textInputAutocapitalization(.never)`
-- Long-press on a note shows a text preview alongside the context menu
 
 ## Create notes
 
@@ -54,7 +54,3 @@ Running list of product + technical decisions. Keep entries short.
 ## Navigation
 
 - Preserve the system back swipe gesture; avoid custom back buttons that disable it
-
-## Implementation notes
-
-- Tree UI uses recursive `View` structs (not recursive functions returning `some View`)
