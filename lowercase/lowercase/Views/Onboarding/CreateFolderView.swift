@@ -47,14 +47,18 @@ struct CreateFolderView: View {
                 .listRowBackground(Color.clear)
             }
         }
-        .lcFormDefaults()
+        .monospaced()
+        .scrollBounceBehavior(.basedOnSize)
+        .environment(\.defaultMinListRowHeight, ViewTokens.listRowMinHeight)
         .navigationTitle("New Folder")
         .navigationBarTitleDisplayMode(.inline)
 //        .navigationBarBackButtonHidden(true)
         .safeAreaBar(edge: .bottom) {
             Button("Create", role: .confirm) { createFolder() }
-                .lcPrimaryActionButton()
-                .padding(.horizontal, LCMetrics.bezelPadding)
+                .buttonSizing(.flexible)
+                .buttonStyle(.glassProminent)
+                .controlSize(.large)
+                .padding(.horizontal, ViewTokens.bezelPadding)
                 .disabled(!canCreate)
         }
         .onAppear {

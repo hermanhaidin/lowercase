@@ -24,7 +24,9 @@ struct SettingsView: View {
                     }
                 }
             }
-            .lcFormDefaults()
+            .monospaced()
+            .scrollBounceBehavior(.basedOnSize)
+            .environment(\.defaultMinListRowHeight, ViewTokens.listRowMinHeight)
 //            .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

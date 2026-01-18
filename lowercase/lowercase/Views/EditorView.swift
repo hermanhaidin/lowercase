@@ -24,7 +24,7 @@ struct EditorView: View {
     
     @FocusState private var isEditorFocused: Bool
 
-    @ScaledMetric private var gapWidth = 4.0
+    @ScaledMetric private var titleGap = ViewTokens.editorTitleGap
     
     // Auto-save debounce
     @State private var saveTask: Task<Void, Never>?
@@ -40,7 +40,7 @@ struct EditorView: View {
     var body: some View {
         TextEditor(text: $content)
             .padding(.horizontal)
-            .lcMonospaced()
+            .monospaced()
             .font(.callout)
             .scrollContentBackground(.hidden)
             .autocorrectionDisabled()
@@ -86,7 +86,7 @@ struct EditorView: View {
                 Text("This action cannot be undone.")
             }
             .sheet(isPresented: $showingMoveSheet) {
-                MoveToSheet(
+                MoveToFolderView(
                     noteURL: noteURL,
                     onMoved: { newURL in
                         // Update the editor to keep saving to the moved location (prevents "copy" behavior)
@@ -115,7 +115,7 @@ struct EditorView: View {
             }
             .buttonStyle(.plain)
             
-            HStack(spacing: gapWidth) {
+            HStack(spacing: titleGap) {
                 Image(systemName: "folder")
                     .font(.caption2.weight(.medium))
                     .foregroundStyle(Color.secondary.gradient)
@@ -125,7 +125,7 @@ struct EditorView: View {
                     .foregroundStyle(.secondary)
             }
         }
-        .lcMonospaced()
+        .monospaced()
     }
     
     private var folderLabel: String {

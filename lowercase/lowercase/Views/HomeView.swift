@@ -63,13 +63,27 @@ struct HomeView: View {
         var id: URL { note.url }
     }
 
-    @ScaledMetric private var gapWidth = 8.0
-    @ScaledMetric private var chevronIconWidth = 16.0
-    @ScaledMetric private var folderIconWidth = 20.0
+    @ScaledMetric private var folderGapWidth = ViewTokens.folderRowGap
+    @ScaledMetric private var noteGapWidth = ViewTokens.noteRowGap
+    @ScaledMetric private var chevronIconWidth = ViewTokens.disclosureIconSize
+    @ScaledMetric private var folderIconWidth = ViewTokens.folderRowIconSize
+    @ScaledMetric private var noteIconWidth = ViewTokens.noteRowIconSize
     
     var body: some View {
         NavigationStack {
-            contentList
+            HomeContentList(
+                folders: fileStore.folders,
+                orphanNotes: fileStore.orphanNotes,
+                folderGapWidth: folderGapWidth,
+                noteGapWidth: noteGapWidth,
+                chevronIconWidth: chevronIconWidth,
+                folderIconWidth: folderIconWidth,
+                noteIconWidth: noteIconWidth,
+                isExpanded: fileStore.isFolderExpanded,
+                onToggleExpanded: fileStore.toggleFolderExpansion,
+                onFolderLongPress: { showQuickActions(for: $0) },
+                onNoteLongPress: { showQuickActions(for: $0) }
+            )
             .toolbar {
                 // top bar
                 ToolbarItem(placement: .topBarLeading) { editButton }
@@ -86,7 +100,7 @@ struct HomeView: View {
                 }
             }
             .navigationDestination(isPresented: $showingNewNote) {
-                NewNoteView { note in
+                SelectFolderView { note in
                     pendingNoteDestination = NoteDestination(note: note)
                     showingNewNote = false
                 }
@@ -98,7 +112,7 @@ struct HomeView: View {
                 EditorView(note: destination.note)
             }
             .sheet(isPresented: $showingSortSheet) {
-                SortSheetView(selectedOption: appState.sortOption) { option in
+                SortByView(selectedOption: appState.sortOption) { option in
                     applySort(option)
                     showingSortSheet = false
                 }
@@ -106,7 +120,7 @@ struct HomeView: View {
                     .presentationDragIndicator(.visible)
             }
             .sheet(isPresented: $showingStorageSheet) {
-                StorageSwitcherSheetView(
+                StorageSwitcherView(
                     selectedRoot: appState.currentRoot,
                     onSelectLocal: selectLocalRoot,
                     onOpenSettings: {
@@ -118,7 +132,7 @@ struct HomeView: View {
                 .presentationDragIndicator(.visible)
             }
             .sheet(item: $quickActionsTarget) { target in
-                QuickActionsSheetView(
+                QuickActionsView(
                     canMove: target.kind == .note,
                     onRename: { handleRename(for: target) },
                     onMove: { handleMove(for: target) },
@@ -128,7 +142,7 @@ struct HomeView: View {
                 .presentationDragIndicator(.visible)
             }
             .sheet(item: $moveTarget) { target in
-                MoveToSheet(noteURL: target.url)
+                MoveToFolderView(noteURL: target.url)
             }
             .alert("Rename", isPresented: $showingRenameAlert) {
                 TextField("Name", text: $newName)
@@ -234,74 +248,11 @@ struct HomeView: View {
     
     // MARK: - Content List
     
-    private var contentList: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                ForEach(fileStore.folders) { folder in
-                    HomeFolderTreeRows(
-                        folder: folder,
-                        depth: 0,
-                        gapWidth: gapWidth,
-                        chevronIconWidth: chevronIconWidth,
-                        folderIconWidth: folderIconWidth,
-                        isExpanded: fileStore.isFolderExpanded,
-                        onToggleExpanded: fileStore.toggleFolderExpansion,
-                        onFolderLongPress: { showQuickActions(for: $0) },
-                        onNoteLongPress: { showQuickActions(for: $0) }
-                    )
-                }
-                
-                ForEach(fileStore.orphanNotes) { note in
-                    noteRow(note, depth: 0, isOrphan: true)
-                        .simultaneousGesture(
-                            LongPressGesture(minimumDuration: 0.4)
-                                .onEnded { _ in showQuickActions(for: note) }
-                        )
-                }
-            }
-        }
-        .contentMargins(.horizontal, 16)
-        .lcMonospaced()
-        .background(Color(.systemGroupedBackground))
-    }
-    
-    private func noteRow(_ note: Note, depth: Int, isOrphan: Bool) -> some View {
-        NavigationLink {
-            EditorView(note: note)
-        } label: {
-            HStack(spacing: gapWidth) {
-                if isOrphan {
-                    Spacer()
-                        .frame(width: chevronIconWidth)
-                } else {
-                    Spacer()
-                        .frame(width: CGFloat(depth) * chevronIconWidth)
-                    Spacer()
-                        .frame(width: chevronIconWidth)
-                }
-                
-                Image(systemName: "text.document")
-                    .font(.title3.weight(.medium))
-                    .symbolRenderingMode(.multicolor)
-                    .frame(width: folderIconWidth)
-                
-                Text(note.filename)
-                    .foregroundStyle(.primary)
-                    .lineLimit(1)
-            }
-            .padding(.vertical, 10)
-            .padding(.horizontal, 8)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .contentShape(.rect)
-        }
-        .buttonStyle(.plain)
-    }
-    
     // MARK: - Toolbar Buttons
     
     private var editButton: some View {
         Button("edit") { }
-            .fontDesign(.monospaced)
+            .monospaced()
     }
     
     private var expandCollapseButton: some View {
@@ -315,7 +266,7 @@ struct HomeView: View {
     
     private var sortButton: some View {
         Button("sort") { showingSortSheet = true }
-            .fontDesign(.monospaced)
+            .monospaced()
     }
     
     // MARK: - Storage Switcher
@@ -324,13 +275,13 @@ struct HomeView: View {
         Button {
             showingStorageSheet = true
         } label: {
-            HStack(spacing: gapWidth) {
+            HStack(spacing: folderGapWidth) {
                 Image(systemName: "circle.fill")
                     .font(.caption2)
                     .foregroundStyle(.green.gradient)
                 
                 Text(appState.currentRoot.shortName)
-                    .fontDesign(.monospaced)
+                    .monospaced()
                 
                 Image(systemName: "chevron.up.chevron.down")
                     .font(.caption2.bold())
@@ -387,120 +338,61 @@ struct HomeView: View {
     }
 }
 
-private struct NoHighlightButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-    }
-}
-
-private struct HomeFolderTreeRows: View {
-    let folder: Folder
-    let depth: Int
-    let gapWidth: CGFloat
+private struct HomeContentList: View {
+    let folders: [Folder]
+    let orphanNotes: [Note]
+    let folderGapWidth: CGFloat
+    let noteGapWidth: CGFloat
     let chevronIconWidth: CGFloat
     let folderIconWidth: CGFloat
+    let noteIconWidth: CGFloat
     let isExpanded: (URL) -> Bool
     let onToggleExpanded: (URL) -> Void
     let onFolderLongPress: (Folder) -> Void
     let onNoteLongPress: (Note) -> Void
     
     var body: some View {
-        Group {
-            folderHeaderRow(folder, depth: depth)
-                .simultaneousGesture(
-                    LongPressGesture(minimumDuration: 0.4)
-                        .onEnded { _ in onFolderLongPress(folder) }
-                )
-            
-            if isExpanded(folder.url) {
-                VStack(spacing: 0) {
-                    ForEach(folder.notes) { note in
-                        NavigationLink {
-                            EditorView(note: note)
-                        } label: {
-                            noteRowContent(note, depth: depth + 1)
-                        }
-                        .buttonStyle(.plain)
-                        .simultaneousGesture(
-                            LongPressGesture(minimumDuration: 0.4)
-                                .onEnded { _ in onNoteLongPress(note) }
-                        )
-                    }
-                    
-                    ForEach(folder.subfolders) { subfolder in
-                        HomeFolderTreeRows(
-                            folder: subfolder,
-                            depth: depth + 1,
-                            gapWidth: gapWidth,
+        ScrollView {
+            VStack(spacing: 0) {
+                ForEach(folders) { folder in
+                    FolderTreeView(
+                        folder: folder,
+                        depth: 0,
+                        folderGapWidth: folderGapWidth,
+                        noteGapWidth: noteGapWidth,
+                        chevronIconWidth: chevronIconWidth,
+                        folderIconWidth: folderIconWidth,
+                        noteIconWidth: noteIconWidth,
+                        isExpanded: isExpanded,
+                        onToggleExpanded: onToggleExpanded,
+                        onFolderLongPress: onFolderLongPress,
+                        onNoteLongPress: onNoteLongPress
+                    )
+                }
+                
+                ForEach(orphanNotes) { note in
+                    NavigationLink {
+                        EditorView(note: note)
+                    } label: {
+                        NoteRow(
+                            note: note,
+                            depth: 0,
+                            isOrphan: true,
+                            gapWidth: noteGapWidth,
                             chevronIconWidth: chevronIconWidth,
-                            folderIconWidth: folderIconWidth,
-                            isExpanded: isExpanded,
-                            onToggleExpanded: onToggleExpanded,
-                            onFolderLongPress: onFolderLongPress,
-                            onNoteLongPress: onNoteLongPress
+                            noteIconWidth: noteIconWidth
                         )
                     }
+                    .buttonStyle(.plain)
+                    .simultaneousGesture(
+                        LongPressGesture(minimumDuration: 0.4)
+                            .onEnded { _ in onNoteLongPress(note) }
+                    )
                 }
             }
         }
-    }
-    
-    private func folderHeaderRow(_ folder: Folder, depth: Int) -> some View {
-        Button {
-            withAnimation(.easeInOut(duration: 0.2)) {
-                onToggleExpanded(folder.url)
-            }
-        } label: {
-            HStack(spacing: gapWidth) {
-                if depth > 0 {
-                    Spacer()
-                        .frame(width: CGFloat(depth) * chevronIconWidth)
-                }
-                
-                Image(systemName: "chevron.right")
-                    .font(.subheadline.bold())
-                    .foregroundStyle(.secondary)
-                    .frame(width: chevronIconWidth)
-                    .rotationEffect(.degrees(isExpanded(folder.url) ? 90 : 0))
-                
-                Image(systemName: "folder.fill")
-                    .font(.title3.weight(.medium))
-                    .foregroundStyle(Color.blue.gradient)
-                    .frame(width: folderIconWidth)
-                
-                Text(folder.name)
-                    .foregroundStyle(.primary)
-                    .lineLimit(1)
-            }
-            .padding(.vertical, 10)
-            .padding(.horizontal, 8)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .contentShape(.rect)
-        }
-        .buttonStyle(NoHighlightButtonStyle())
-    }
-    
-    private func noteRowContent(_ note: Note, depth: Int) -> some View {
-        HStack(spacing: gapWidth) {
-            Spacer()
-                .frame(width: CGFloat(depth) * chevronIconWidth)
-            
-            Spacer()
-                .frame(width: chevronIconWidth)
-            
-            Image(systemName: "text.document")
-                .font(.title3.weight(.medium))
-                .symbolRenderingMode(.multicolor)
-                .frame(width: folderIconWidth)
-            
-            Text(note.filename)
-                .foregroundStyle(.primary)
-                .lineLimit(1)
-        }
-        .padding(.vertical, 10)
-        .padding(.horizontal, 8)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .contentShape(.rect)
+        .contentMargins(.horizontal, 16)
+        .monospaced()
     }
 }
 

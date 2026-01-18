@@ -6,8 +6,6 @@
 import SwiftUI
 
 struct OnboardingView: View {
-    @Environment(FileStore.self) private var fileStore
-    
     @State private var navigationPath = NavigationPath()
     
     var body: some View {
@@ -22,7 +20,7 @@ struct OnboardingView: View {
                     
                     Text("open them anywhere, even offline")
                 }
-                .lcMonospaced()
+                .monospaced()
                 .frame(maxWidth: .infinity, alignment: .leading)
                 
                 Spacer()
@@ -30,9 +28,11 @@ struct OnboardingView: View {
                 Button("Create New Folder", role: .confirm) {
                     navigationPath.append("createFolder")
                 }
-                .lcPrimaryActionButton()
+                .buttonSizing(.flexible)
+                .buttonStyle(.glassProminent)
+                .controlSize(.large)
             }
-            .padding(.horizontal, LCMetrics.bezelPadding)
+            .padding(.horizontal, ViewTokens.bezelPadding)
             .navigationDestination(for: String.self) { destination in
                 if destination == "createFolder" {
                     CreateFolderView()
