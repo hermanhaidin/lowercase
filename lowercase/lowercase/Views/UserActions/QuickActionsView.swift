@@ -6,19 +6,43 @@ struct QuickActionsView: View {
     let onMove: () -> Void
     let onDelete: () -> Void
     
+    @ScaledMetric private var gapWidth = ViewTokens.listRowIconGap
+    @ScaledMetric private var iconSize = ViewTokens.folderRowIconSize
+    
     var body: some View {
         NavigationStack {
             Form {
                 Section {
-                    QuickActionButton(symbol: ">", title: "rename", role: nil, isSecondarySymbol: true, action: onRename)
+                    QuickActionButton(
+                        systemImage: "pencil",
+                        title: "rename",
+                        gapWidth: gapWidth,
+                        iconSize: iconSize,
+                        role: nil,
+                        action: onRename
+                    )
                     
                     if canMove {
-                        QuickActionButton(symbol: ">", title: "move to", role: nil, isSecondarySymbol: true, action: onMove)
+                        QuickActionButton(
+                            systemImage: "folder",
+                            title: "move to",
+                            gapWidth: gapWidth,
+                            iconSize: iconSize,
+                            role: nil,
+                            action: onMove
+                        )
                     }
                 }
                 
                 Section {
-                    QuickActionButton(symbol: "!", title: "delete", role: .destructive, isSecondarySymbol: false, action: onDelete)
+                    QuickActionButton(
+                        systemImage: "trash",
+                        title: "delete",
+                        gapWidth: gapWidth,
+                        iconSize: iconSize,
+                        role: .destructive,
+                        action: onDelete
+                    )
                         .foregroundStyle(.red)
                 }
             }

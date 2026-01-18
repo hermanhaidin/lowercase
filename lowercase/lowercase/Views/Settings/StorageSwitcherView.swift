@@ -5,6 +5,7 @@ struct StorageSwitcherView: View {
     let onSelectLocal: () -> Void
     let onOpenSettings: () -> Void
     
+    @ScaledMetric private var gapWidth = ViewTokens.listRowIconGap
     @ScaledMetric private var iconSize = ViewTokens.folderRowIconSize
     
     var body: some View {
@@ -14,6 +15,7 @@ struct StorageSwitcherView: View {
                     StorageOptionButton(
                         systemImage: "iphone",
                         title: "on my iphone",
+                        gapWidth: gapWidth,
                         iconWidth: iconSize,
                         isSelected: selectedRoot == .local,
                         showsCheckmark: true,
@@ -22,13 +24,13 @@ struct StorageSwitcherView: View {
                 }
                 
                 Section {
-                    StorageOptionButton(
+                    QuickActionButton(
                         systemImage: "gearshape",
                         title: "settings",
-                        iconWidth: iconSize,
-                        isSelected: false,
-                        showsCheckmark: false,
-                        onSelect: onOpenSettings
+                        gapWidth: gapWidth,
+                        iconSize: iconSize,
+                        role: nil,
+                        action: onOpenSettings
                     )
                 }
             }

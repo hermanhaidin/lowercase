@@ -1,6 +1,6 @@
 # Screens
 
-## Navigation Graph
+## Navigation graph
 
 ```
 app launch
@@ -16,6 +16,7 @@ app launch
     │   ├─ tap move to → move to (sheet)
     │   │   ├─ tap new folder → create folder (inline) → home (note moved)
     │   │   ├─ tap folder → home (note moved)
+    │   │   └─ tap sort → sort options (sheet medium detent)
     │   │   └─ tap cancel, swipe down → home
     │   └─ tap delete → delete note (sheet medium detent)
     │       ├─ tap delete and don't ask again → home (note deleted)

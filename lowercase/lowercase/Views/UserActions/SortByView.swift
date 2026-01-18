@@ -11,14 +11,14 @@ struct SortByView: View {
                     SortOptionButton(
                         option: .nameAsc,
                         selectedOption: selectedOption,
-                        title: "name:",
+                        title: "name",
                         detail: "a to z",
                         onSelect: onSelect
                     )
                     SortOptionButton(
                         option: .nameDesc,
                         selectedOption: selectedOption,
-                        title: "name:",
+                        title: "name",
                         detail: "z to a",
                         onSelect: onSelect
                     )
@@ -28,14 +28,14 @@ struct SortByView: View {
                     SortOptionButton(
                         option: .modifiedDesc,
                         selectedOption: selectedOption,
-                        title: "modified:",
+                        title: "modified",
                         detail: "new to old",
                         onSelect: onSelect
                     )
                     SortOptionButton(
                         option: .modifiedAsc,
                         selectedOption: selectedOption,
-                        title: "modified:",
+                        title: "modified",
                         detail: "old to new",
                         onSelect: onSelect
                     )
@@ -45,14 +45,14 @@ struct SortByView: View {
                     SortOptionButton(
                         option: .createdDesc,
                         selectedOption: selectedOption,
-                        title: "created:",
+                        title: "created",
                         detail: "new to old",
                         onSelect: onSelect
                     )
                     SortOptionButton(
                         option: .createdAsc,
                         selectedOption: selectedOption,
-                        title: "created:",
+                        title: "created",
                         detail: "old to new",
                         onSelect: onSelect
                     )

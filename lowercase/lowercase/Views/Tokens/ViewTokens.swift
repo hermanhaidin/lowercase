@@ -13,4 +13,5 @@ enum ViewTokens {
     static let folderRowIconSize: CGFloat = 20
     static let noteRowIconSize: CGFloat = 20
     static let editorTitleGap: CGFloat = 4
+    static let listRowIconGap: CGFloat = 12
 }

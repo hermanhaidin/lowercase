@@ -7,6 +7,7 @@ import SwiftUI
 
 struct MoveToFolderView: View {
     @Environment(FileStore.self) private var fileStore
+    @Environment(AppState.self) private var appState
     @Environment(\.dismiss) private var dismiss
     
     let noteURL: URL
@@ -16,6 +17,7 @@ struct MoveToFolderView: View {
     
     @State private var isCreatingFolder = false
     @State private var newFolderName = ""
+    @State private var showingSortSheet = false
     
     @FocusState private var isFolderNameFocused: Bool
 
@@ -25,64 +27,44 @@ struct MoveToFolderView: View {
     
     var body: some View {
         NavigationStack {
-            List {
-                Section {
-                    if isCreatingFolder {
-                        FolderNameInputRow(
-                            name: $newFolderName,
-                            onSubmit: createFolderAndMove,
-                            onCreate: createFolderAndMove,
-                            isFocused: $isFolderNameFocused
-                        )
-                    } else {
-                        Button {
-                            isCreatingFolder = true
-                            isFolderNameFocused = true
-                        } label: {
-                            HStack(spacing: gapWidth) {
-                                Image(systemName: "plus")
-                                    .frame(width: folderIconWidth)
-                                    .padding(.leading, 8)
-                                
-                                Text("new folder")
-                            }
-                        }
-                    }
-                }
-                .listRowBackground(Color.clear)
-                
-                ForEach(fileStore.folders) { folder in
-                    FolderPickerTreeView(
-                        folder: folder,
-                        depth: 0,
-                        currentFolderURL: currentFolderURL,
-                        gapWidth: gapWidth,
-                        indentWidth: indentWidth,
-                        folderIconWidth: folderIconWidth,
-                        iconLeadingPadding: 8,
-                        rowPadding: EdgeInsets(),
-                        showsChevron: true,
-                        showsCurrentLabel: true,
-                        disableCurrentSelection: true,
-                        hidesRowSeparators: true,
-                        onSelect: moveNoteToFolder
-                    )
-                }
-            }
-            .monospaced()
-            .listSectionSpacing(ViewTokens.listSectionSpacing)
-            .scrollBounceBehavior(.basedOnSize)
-            .environment(\.defaultMinListRowHeight, ViewTokens.listRowMinHeight)
-            .navigationTitle("Move to...")
+            FolderPickerListView(
+                isCreatingFolder: $isCreatingFolder,
+                newFolderName: $newFolderName,
+                isFolderNameFocused: $isFolderNameFocused,
+                folders: fileStore.folders,
+                currentFolderURL: currentFolderURL,
+                gapWidth: gapWidth,
+                indentWidth: indentWidth,
+                folderIconWidth: folderIconWidth,
+                showsCurrentLabel: true,
+                disableCurrentSelection: true,
+                onCreateFolder: createFolderAndMove,
+                onSelectFolder: moveNoteToFolder
+            )
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button {
-                        dismiss()
-                    } label: {
-                        Image(systemName: "xmark")
-                    }
+                    Button("close", systemImage: "xmark") { dismiss() }
                 }
+                
+                ToolbarItem(placement: .title) {
+                    Text("move to")
+                        .foregroundStyle(.secondary)
+                        .monospaced()
+                }
+                
+                ToolbarItem {
+                    Button("sort") { showingSortSheet = true }
+                        .monospaced()
+                }
+            }
+            .sheet(isPresented: $showingSortSheet) {
+                SortByView(selectedOption: appState.sortOption) { option in
+                    applySort(option)
+                    showingSortSheet = false
+                }
+                .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
             }
         }
     }
@@ -118,6 +100,11 @@ struct MoveToFolderView: View {
         } catch {
             print("Failed to move note: \(error)")
         }
+    }
+    
+    private func applySort(_ option: SortOption) {
+        appState.sortOption = option
+        fileStore.sort(by: option)
     }
 }
 

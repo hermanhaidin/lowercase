@@ -3,6 +3,7 @@ import SwiftUI
 struct StorageOptionButton: View {
     let systemImage: String
     let title: String
+    let gapWidth: CGFloat
     let iconWidth: CGFloat
     let isSelected: Bool
     let showsCheckmark: Bool
@@ -12,7 +13,7 @@ struct StorageOptionButton: View {
         Button {
             onSelect()
         } label: {
-            HStack {
+            HStack(spacing: gapWidth) {
                 Image(systemName: systemImage)
                     .frame(width: iconWidth)
                 
@@ -28,6 +29,8 @@ struct StorageOptionButton: View {
                         .foregroundStyle(.tint)
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(.rect)
         }
         .buttonStyle(.plain)
     }
