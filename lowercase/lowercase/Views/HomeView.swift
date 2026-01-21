@@ -70,116 +70,114 @@ struct HomeView: View {
     @ScaledMetric private var noteIconWidth = ViewTokens.noteRowIconSize
     
     var body: some View {
-        NavigationStack {
-            HomeContentList(
-                folders: fileStore.folders,
-                orphanNotes: fileStore.orphanNotes,
-                folderGapWidth: folderGapWidth,
-                noteGapWidth: noteGapWidth,
-                chevronIconWidth: chevronIconWidth,
-                folderIconWidth: folderIconWidth,
-                noteIconWidth: noteIconWidth,
-                isExpanded: fileStore.isFolderExpanded,
-                onToggleExpanded: fileStore.toggleFolderExpansion,
-                onFolderLongPress: { showQuickActions(for: $0) },
-                onNoteLongPress: { showQuickActions(for: $0) }
+        HomeContentList(
+            folders: fileStore.folders,
+            orphanNotes: fileStore.orphanNotes,
+            folderGapWidth: folderGapWidth,
+            noteGapWidth: noteGapWidth,
+            chevronIconWidth: chevronIconWidth,
+            folderIconWidth: folderIconWidth,
+            noteIconWidth: noteIconWidth,
+            isExpanded: fileStore.isFolderExpanded,
+            onToggleExpanded: fileStore.toggleFolderExpansion,
+            onFolderLongPress: { showQuickActions(for: $0) },
+            onNoteLongPress: { showQuickActions(for: $0) }
+        )
+        .toolbar {
+            // top bar
+            ToolbarItem(placement: .topBarLeading) { editButton }
+            ToolbarItem { expandCollapseButton }
+            ToolbarSpacer(.fixed)
+            ToolbarItem { sortButton }
+            
+            // bottom bar
+            ToolbarItem(placement: .bottomBar) { storageSwitcher }
+            ToolbarItem(placement: .bottomBar) {
+                Button("Add Note", systemImage: "plus", role: .confirm) {
+                    showingNewNote = true
+                }
+            }
+        }
+        .navigationDestination(isPresented: $showingNewNote) {
+            SelectFolderView { note in
+                pendingNoteDestination = NoteDestination(note: note)
+                showingNewNote = false
+            }
+        }
+        .navigationDestination(isPresented: $showingSettingsDestination) {
+            SettingsView()
+        }
+        .navigationDestination(item: $pendingNoteDestination) { destination in
+            EditorView(note: destination.note)
+        }
+        .sheet(isPresented: $showingSortSheet) {
+            SortByView(selectedOption: appState.sortOption) { option in
+                applySort(option)
+                showingSortSheet = false
+            }
+                .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
+        }
+        .sheet(isPresented: $showingStorageSheet) {
+            StorageSwitcherView(
+                selectedRoot: appState.currentRoot,
+                onSelectLocal: selectLocalRoot,
+                onOpenSettings: {
+                    pendingSettingsFromStorage = true
+                    showingStorageSheet = false
+                }
             )
-            .toolbar {
-                // top bar
-                ToolbarItem(placement: .topBarLeading) { editButton }
-                ToolbarItem { expandCollapseButton }
-                ToolbarSpacer(.fixed)
-                ToolbarItem { sortButton }
-                
-                // bottom bar
-                ToolbarItem(placement: .bottomBar) { storageSwitcher }
-                ToolbarItem(placement: .bottomBar) {
-                    Button("Add Note", systemImage: "plus", role: .confirm) {
-                        showingNewNote = true
-                    }
-                }
+            .presentationDetents([.medium])
+            .presentationDragIndicator(.visible)
+        }
+        .sheet(item: $quickActionsTarget) { target in
+            QuickActionsView(
+                canMove: target.kind == .note,
+                onRename: { handleRename(for: target) },
+                onMove: { handleMove(for: target) },
+                onDelete: { handleDelete(for: target) }
+            )
+            .presentationDetents([.medium])
+            .presentationDragIndicator(.visible)
+        }
+        .sheet(item: $moveTarget) { target in
+            MoveToFolderView(noteURL: target.url)
+        }
+        .alert("Rename", isPresented: $showingRenameAlert) {
+            TextField("Name", text: $newName)
+            Button("Cancel", role: .cancel) {
+                itemToRename = nil
             }
-            .navigationDestination(isPresented: $showingNewNote) {
-                SelectFolderView { note in
-                    pendingNoteDestination = NoteDestination(note: note)
-                    showingNewNote = false
-                }
+            Button("Rename") {
+                performRename()
             }
-            .navigationDestination(isPresented: $showingSettingsDestination) {
-                SettingsView()
+        }
+        .confirmationDialog(
+            "Delete",
+            isPresented: $showingDeleteConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Delete", role: .destructive) {
+                performDelete()
             }
-            .navigationDestination(item: $pendingNoteDestination) { destination in
-                EditorView(note: destination.note)
+            Button("Cancel", role: .cancel) {
+                itemToDelete = nil
             }
-            .sheet(isPresented: $showingSortSheet) {
-                SortByView(selectedOption: appState.sortOption) { option in
-                    applySort(option)
-                    showingSortSheet = false
-                }
-                    .presentationDetents([.medium])
-                    .presentationDragIndicator(.visible)
-            }
-            .sheet(isPresented: $showingStorageSheet) {
-                StorageSwitcherView(
-                    selectedRoot: appState.currentRoot,
-                    onSelectLocal: selectLocalRoot,
-                    onOpenSettings: {
-                        pendingSettingsFromStorage = true
-                        showingStorageSheet = false
-                    }
-                )
-                .presentationDetents([.medium])
-                .presentationDragIndicator(.visible)
-            }
-            .sheet(item: $quickActionsTarget) { target in
-                QuickActionsView(
-                    canMove: target.kind == .note,
-                    onRename: { handleRename(for: target) },
-                    onMove: { handleMove(for: target) },
-                    onDelete: { handleDelete(for: target) }
-                )
-                .presentationDetents([.medium])
-                .presentationDragIndicator(.visible)
-            }
-            .sheet(item: $moveTarget) { target in
-                MoveToFolderView(noteURL: target.url)
-            }
-            .alert("Rename", isPresented: $showingRenameAlert) {
-                TextField("Name", text: $newName)
-                Button("Cancel", role: .cancel) {
-                    itemToRename = nil
-                }
-                Button("Rename") {
-                    performRename()
-                }
-            }
-            .confirmationDialog(
-                "Delete",
-                isPresented: $showingDeleteConfirmation,
-                titleVisibility: .visible
-            ) {
-                Button("Delete", role: .destructive) {
-                    performDelete()
-                }
-                Button("Cancel", role: .cancel) {
-                    itemToDelete = nil
-                }
-            } message: {
-                Text("This action cannot be undone.")
-            }
-            .onAppear {
-                fileStore.reload()
-            }
-            .onChange(of: quickActionsTarget) { _, newValue in
-                guard newValue == nil, let pendingMoveTarget else { return }
-                moveTarget = pendingMoveTarget
-                self.pendingMoveTarget = nil
-            }
-            .onChange(of: showingStorageSheet) { _, newValue in
-                guard newValue == false, pendingSettingsFromStorage else { return }
-                pendingSettingsFromStorage = false
-                showingSettingsDestination = true
-            }
+        } message: {
+            Text("This action cannot be undone.")
+        }
+        .onAppear {
+            fileStore.reload()
+        }
+        .onChange(of: quickActionsTarget) { _, newValue in
+            guard newValue == nil, let pendingMoveTarget else { return }
+            moveTarget = pendingMoveTarget
+            self.pendingMoveTarget = nil
+        }
+        .onChange(of: showingStorageSheet) { _, newValue in
+            guard newValue == false, pendingSettingsFromStorage else { return }
+            pendingSettingsFromStorage = false
+            showingSettingsDestination = true
         }
     }
     

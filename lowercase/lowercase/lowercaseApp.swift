@@ -14,13 +14,7 @@ struct lowercaseApp: App {
     
     var body: some Scene {
         WindowGroup {
-            Group {
-                if fileStore.shouldShowOnboarding {
-                    OnboardingView()
-                } else {
-                    HomeView()
-                }
-            }
+            AppRootView()
             .environment(appState)
             .environment(fileStore)
             .preferredColorScheme(appState.colorScheme)

@@ -7,8 +7,6 @@ import SwiftUI
 
 struct CreateFolderView: View {
     @Environment(FileStore.self) private var fileStore
-    @Environment(\.dismiss) private var dismiss
-    
     /// Callback when folder is created - passes folder URL
     var onFolderCreated: ((URL) -> Void)?
     
@@ -90,7 +88,6 @@ struct CreateFolderView: View {
                 onFolderCreated?(folderURL)
             }
             
-            dismiss()
         } catch FileStoreError.alreadyExists {
             errorMessage = "a folder with this name already exists"
         } catch {
