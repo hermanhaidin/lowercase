@@ -28,38 +28,46 @@ struct CreateFolderView: View {
     }
     
     var body: some View {
-        Form {
-            Section {
-                TextField("folder name e.g. daily", text: $folderName)
-                    .autocorrectionDisabled()
-                    .textInputAutocapitalization(.never)
-                    .focused($isNameFocused)
-                    .onSubmit {
-                        if canCreate { createFolder() }
-                    }
-            }
-            
-            if let error = errorMessage {
+        VStack {
+            Form {
                 Section {
-                    Text(error)
-                        .foregroundStyle(.red)
+                    TextField("folder name e.g. daily", text: $folderName)
+                        .autocorrectionDisabled()
+                        .textInputAutocapitalization(.never)
+                        .focused($isNameFocused)
+                        .onSubmit {
+                            if canCreate { createFolder() }
+                        }
                 }
-                .listRowBackground(Color.clear)
+                
+                if let error = errorMessage {
+                    Section {
+                        Text(error)
+                            .foregroundStyle(.red)
+                    }
+                    .listRowBackground(Color.clear)
+                }
             }
+            .monospaced()
+            .navigationBarTitleDisplayMode(.inline)
+            .scrollBounceBehavior(.basedOnSize)
         }
-        .monospaced()
-        .scrollBounceBehavior(.basedOnSize)
-        .environment(\.defaultMinListRowHeight, ViewTokens.listRowMinHeight)
-        .navigationTitle("New Folder")
-        .navigationBarTitleDisplayMode(.inline)
-//        .navigationBarBackButtonHidden(true)
-        .safeAreaBar(edge: .bottom) {
-            Button("Create", role: .confirm) { createFolder() }
+        .safeAreaInset(edge: .bottom) {
+            Button("create", role: .confirm) { createFolder() }
                 .buttonSizing(.flexible)
                 .buttonStyle(.glassProminent)
                 .controlSize(.large)
+                .monospaced()
                 .padding(.horizontal, ViewTokens.bezelPadding)
+                .padding(.bottom, isNameFocused ? 16 : 0)
                 .disabled(!canCreate)
+        }
+        .toolbar {
+            ToolbarItem(placement: .title) {
+                Text("new folder")
+                    .foregroundStyle(.secondary)
+                    .monospaced()
+            }
         }
         .onAppear {
             isNameFocused = true

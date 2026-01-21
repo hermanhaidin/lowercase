@@ -20,6 +20,7 @@ struct EditorView: View {
     @State private var showingMoveSheet = false
     @State private var showingRenameAlert = false
     @State private var showingDeleteConfirmation = false
+    @State private var showingQuickActions = false
     @State private var newFilename: String = ""
     
     @FocusState private var isEditorFocused: Bool
@@ -41,7 +42,6 @@ struct EditorView: View {
         TextEditor(text: $content)
             .padding(.horizontal)
             .monospaced()
-            .font(.callout)
             .scrollContentBackground(.hidden)
             .autocorrectionDisabled()
             .textInputAutocapitalization(.never)
@@ -50,11 +50,8 @@ struct EditorView: View {
                 scheduleAutoSave()
             }
             .toolbar {
-                ToolbarItem(placement: .principal) { titleStack }
-                
-                ToolbarItem(placement: .topBarTrailing) {
-                    moreMenuButton
-                }
+                ToolbarItem(placement: .title) { titleStack }
+                ToolbarItem { showMoreButton }
                 
                 // Keyboard accessory - hide keyboard button
                 ToolbarItem(placement: .keyboard) {
@@ -69,7 +66,6 @@ struct EditorView: View {
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
-//            .navigationBarBackButtonHidden(true)
             .alert("Rename", isPresented: $showingRenameAlert) {
                 TextField("Filename", text: $newFilename)
                 Button("Cancel", role: .cancel) { }
@@ -84,6 +80,26 @@ struct EditorView: View {
                 Button("Cancel", role: .cancel) { }
             } message: {
                 Text("This action cannot be undone.")
+            }
+            .sheet(isPresented: $showingQuickActions) {
+                QuickActionsView(
+                    canMove: true,
+                    onRename: {
+                        newFilename = filename
+                        showingRenameAlert = true
+                        showingQuickActions = false
+                    },
+                    onMove: {
+                        showingMoveSheet = true
+                        showingQuickActions = false
+                    },
+                    onDelete: {
+                        showingDeleteConfirmation = true
+                        showingQuickActions = false
+                    }
+                )
+                .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
             }
             .sheet(isPresented: $showingMoveSheet) {
                 MoveToFolderView(
@@ -137,28 +153,9 @@ struct EditorView: View {
     
     // MARK: - More Menu
     
-    private var moreMenuButton: some View {
-        Menu {
-            Button {
-                newFilename = filename
-                showingRenameAlert = true
-            } label: {
-                Label("Rename", systemImage: "pencil")
-            }
-            
-            Button {
-                showingMoveSheet = true
-            } label: {
-                Label("Move to...", systemImage: "folder")
-            }
-            
-            Divider()
-            
-            Button(role: .destructive) {
-                showingDeleteConfirmation = true
-            } label: {
-                Label("Delete", systemImage: "trash")
-            }
+    private var showMoreButton: some View {
+        Button {
+            showingQuickActions = true
         } label: {
             Image(systemName: "ellipsis")
         }

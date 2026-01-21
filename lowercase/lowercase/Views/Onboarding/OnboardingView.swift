@@ -14,9 +14,9 @@ struct OnboardingView: View {
                 Spacer()
                 
                 VStack(alignment: .leading, spacing: 16) {
-                    Text("# your thoughts are yours...")
+                    Text("# your thoughts are yours")
                     
-                    Text("~/lowercase stores notes as files on your device")
+                    Text("lowercase stores notes as files on your device")
                     
                     Text("open them anywhere, even offline")
                 }
