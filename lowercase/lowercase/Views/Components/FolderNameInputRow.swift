@@ -2,8 +2,8 @@ import SwiftUI
 
 struct FolderNameInputRow: View {
     @Binding var name: String
-    var placeholder: String = "folder name"
-    var createTitle: String = "Create"
+    var placeholder = "folder name"
+    var createTitle = "create"
     var onSubmit: () -> Void
     var onCreate: () -> Void
     @FocusState.Binding var isFocused: Bool

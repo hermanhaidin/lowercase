@@ -41,12 +41,10 @@ struct SelectFolderView: View {
                 ToolbarItem(placement: .title) {
                     Text("select folder")
                         .foregroundStyle(.secondary)
-                        .monospaced()
                 }
                 
-                ToolbarItem {
+                ToolbarItem(placement: .automatic) {
                     Button("sort") { showingSortSheet = true }
-                        .monospaced()
                 }
             }
             .sheet(isPresented: $showingSortSheet) {
@@ -57,6 +55,7 @@ struct SelectFolderView: View {
                 .presentationDetents([.medium])
                 .presentationDragIndicator(.visible)
             }
+            .monospaced()
     }
     
     // MARK: - Actions

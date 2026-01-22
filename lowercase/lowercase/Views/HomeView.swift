@@ -84,20 +84,28 @@ struct HomeView: View {
             onNoteLongPress: { showQuickActions(for: $0) }
         )
         .toolbar {
-            // top bar
             ToolbarItem(placement: .topBarLeading) { editButton }
-            ToolbarItem { expandCollapseButton }
+            ToolbarItem(placement: .automatic) { expandCollapseButton }
             ToolbarSpacer(.fixed)
-            ToolbarItem { sortButton }
-            
-            // bottom bar
-            ToolbarItem(placement: .bottomBar) { storageSwitcher }
-            ToolbarItem(placement: .bottomBar) {
-                Button("Add Note", systemImage: "plus", role: .confirm) {
+            ToolbarItem(placement: .automatic) { sortButton }
+        }
+        .safeAreaInset(edge: .bottom) {
+            HStack {
+                storageSwitcher
+                    .glassEffect(.regular.interactive(), in: .capsule)
+                    .buttonStyle(.plain)
+                
+                Button {
                     showingNewNote = true
+                } label: {
+                    Image(systemName: "plus")
+                        .foregroundStyle(.white)
+                        .frame(width: 48, height: 48)
                 }
+                .glassEffect(.regular.tint(.blue).interactive(), in: .circle)
             }
         }
+        .ignoresSafeArea(.keyboard, edges: .bottom)
         .navigationDestination(isPresented: $showingNewNote) {
             SelectFolderView { note in
                 pendingNoteDestination = NoteDestination(note: note)
@@ -292,6 +300,8 @@ struct HomeView: View {
                     .font(.caption2.bold())
                     .foregroundStyle(.secondary)
             }
+            .frame(height: 48)
+            .padding(.horizontal)
         }
     }
 

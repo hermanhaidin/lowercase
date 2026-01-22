@@ -59,6 +59,8 @@ Running list of product + technical decisions. Keep entries short.
 - Use `ScaledMetric` over hardcoded padding; plain `padding()` / `padding(.horizontal)` is fine when it stays stable
 - Search view shows total folder + file counts (not shown by default elsewhere)
 - Onboarding CTA is a full-width glass button: `buttonSizing(.flexible)` + `buttonStyle(.glassProminent)` + `controlSize(.large)`
+- Home bottom actions use `safeAreaBar(edge: .bottom)` to avoid SwiftUI top + bottom toolbar conflicts
+- Avoid mixing top and bottom toolbar items in the same view; use `safeAreaBar` for bottom controls
 - Custom app themes are out of scope for v0
 
 ## Navigation

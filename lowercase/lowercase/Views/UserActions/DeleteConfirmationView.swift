@@ -31,7 +31,6 @@ struct DeleteConfirmationView: View {
                         Text("it will be moved to your system trash")
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.bottom)
                 }
                 .listRowBackground(Color.clear)
                 
@@ -54,6 +53,7 @@ struct DeleteConfirmationView: View {
             .listSectionSpacing(ViewTokens.sheetSectionSpacing)
             .monospaced()
             .navigationBarTitleDisplayMode(.inline)
+            .scrollBounceBehavior(.basedOnSize)
         }
     }
 }

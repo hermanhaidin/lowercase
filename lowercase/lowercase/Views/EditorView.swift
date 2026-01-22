@@ -23,7 +23,7 @@ struct EditorView: View {
     @State private var showingQuickActions = false
     @State private var pendingDeleteConfirmation = false
     @State private var newFilename: String = ""
-    
+
     @FocusState private var isEditorFocused: Bool
 
     @ScaledMetric private var titleGap = ViewTokens.editorTitleGap
@@ -40,106 +40,113 @@ struct EditorView: View {
     }
     
     var body: some View {
-        TextEditor(text: $content)
-            .padding(.horizontal)
-            .monospaced()
-            .scrollContentBackground(.hidden)
-            .autocorrectionDisabled()
-            .textInputAutocapitalization(.never)
-            .focused($isEditorFocused)
-            .onChange(of: content) { _, _ in
-                scheduleAutoSave()
-            }
-            .toolbar {
-                ToolbarItem(placement: .title) { titleStack }
-                ToolbarItem { showMoreButton }
-                
-                // Keyboard accessory - hide keyboard button
-                ToolbarItem(placement: .keyboard) {
-                    HStack {
-                        Spacer()
-                        Button {
-                            isEditorFocused = false
-                        } label: {
-                            Image(systemName: "keyboard.chevron.compact.down")
-                        }
-                    }
+        VStack {
+            TextEditor(text: $content)
+                .padding(.horizontal)
+                .monospaced()
+                .scrollContentBackground(.hidden)
+                .autocorrectionDisabled()
+                .textInputAutocapitalization(.never)
+                .focused($isEditorFocused)
+                .onChange(of: content) { _, _ in
+                    scheduleAutoSave()
                 }
-            }
-            .navigationBarTitleDisplayMode(.inline)
-            .alert("Rename", isPresented: $showingRenameAlert) {
-                TextField("Filename", text: $newFilename)
-                Button("Cancel", role: .cancel) { }
-                Button("Rename") {
-                    renameNote()
+        }
+        .navigationBarTitleDisplayMode(.inline)
+        .safeAreaInset(edge: .bottom) {
+            if isEditorFocused {
+                HStack {
+                    Spacer()
+                    Button {
+                        isEditorFocused = false
+                    } label: {
+                        Image(systemName: "keyboard.chevron.compact.down")
+                            .frame(width: 48, height: 48)
+                    }
+                    .glassEffect(.regular.interactive(), in: .circle)
+                    .buttonStyle(.plain)
                 }
+                .padding(.horizontal)
+                .padding(.bottom, 8)
             }
-            .sheet(isPresented: $showingDeleteConfirmation) {
-                DeleteConfirmationView(
-                    name: filename,
-                    isFolder: false,
-                    onDeleteAndDontAsk: {
-                        appState.skipDeleteConfirmation = true
-                        showingDeleteConfirmation = false
-                        deleteNote()
-                    },
-                    onDelete: {
-                        showingDeleteConfirmation = false
-                        deleteNote()
-                    },
-                    onCancel: {
-                        showingDeleteConfirmation = false
-                    }
-                )
-                    .presentationDetents([.medium])
-                    .presentationDragIndicator(.visible)
+        }
+        .toolbar {
+            ToolbarItem(placement: .title) { titleStack }
+            ToolbarItem(placement: .automatic) { showMoreButton }
+        }
+        .alert("Rename", isPresented: $showingRenameAlert) {
+            TextField("Filename", text: $newFilename)
+            Button("Cancel", role: .cancel) { }
+            Button("Rename") {
+                renameNote()
             }
-            .sheet(isPresented: $showingQuickActions) {
-                QuickActionsView(
-                    canMove: true,
-                    onRename: {
-                        newFilename = filename
-                        showingRenameAlert = true
-                        showingQuickActions = false
-                    },
-                    onMove: {
-                        showingMoveSheet = true
-                        showingQuickActions = false
-                    },
-                    onDelete: {
-                        showingQuickActions = false
-                        if appState.skipDeleteConfirmation {
-                            deleteNote()
-                        } else {
-                            pendingDeleteConfirmation = true
-                        }
-                    }
-                )
+        }
+        .sheet(isPresented: $showingDeleteConfirmation) {
+            DeleteConfirmationView(
+                name: filename,
+                isFolder: false,
+                onDeleteAndDontAsk: {
+                    appState.skipDeleteConfirmation = true
+                    showingDeleteConfirmation = false
+                    deleteNote()
+                },
+                onDelete: {
+                    showingDeleteConfirmation = false
+                    deleteNote()
+                },
+                onCancel: {
+                    showingDeleteConfirmation = false
+                }
+            )
                 .presentationDetents([.medium])
                 .presentationDragIndicator(.visible)
-            }
-            .sheet(isPresented: $showingMoveSheet) {
-                MoveToFolderView(
-                    noteURL: noteURL,
-                    onMoved: { newURL in
-                        // Update the editor to keep saving to the moved location (prevents "copy" behavior)
-                        noteURL = newURL
-                        filename = newURL.deletingPathExtension().lastPathComponent
-                        fileStore.reload()
+        }
+        .sheet(isPresented: $showingQuickActions) {
+            QuickActionsView(
+                canMove: true,
+                onRename: {
+                    newFilename = filename
+                    showingRenameAlert = true
+                    showingQuickActions = false
+                },
+                onMove: {
+                    showingMoveSheet = true
+                    showingQuickActions = false
+                },
+                onDelete: {
+                    showingQuickActions = false
+                    if appState.skipDeleteConfirmation {
+                        deleteNote()
+                    } else {
+                        pendingDeleteConfirmation = true
                     }
-                )
-            }
-            .onAppear {
-                loadContent()
-            }
-            .onDisappear {
-                finalizeExitIfNeeded()
-            }
-            .onChange(of: showingQuickActions) { _, newValue in
-                guard newValue == false, pendingDeleteConfirmation else { return }
-                pendingDeleteConfirmation = false
-                showingDeleteConfirmation = true
-            }
+                }
+            )
+            .presentationDetents([.medium])
+            .presentationDragIndicator(.visible)
+        }
+        .sheet(isPresented: $showingMoveSheet) {
+            MoveToFolderView(
+                noteURL: noteURL,
+                onMoved: { newURL in
+                    // Update the editor to keep saving to the moved location (prevents "copy" behavior)
+                    noteURL = newURL
+                    filename = newURL.deletingPathExtension().lastPathComponent
+                    fileStore.reload()
+                }
+            )
+        }
+        .onAppear {
+            loadContent()
+        }
+        .onDisappear {
+            finalizeExitIfNeeded()
+        }
+        .onChange(of: showingQuickActions) { _, newValue in
+            guard newValue == false, pendingDeleteConfirmation else { return }
+            pendingDeleteConfirmation = false
+            showingDeleteConfirmation = true
+        }
     }
 
     private var titleStack: some View {
@@ -152,16 +159,6 @@ struct EditorView: View {
                     .foregroundStyle(.primary)
             }
             .buttonStyle(.plain)
-            
-            HStack(spacing: titleGap) {
-                Image(systemName: "folder")
-                    .font(.caption2.weight(.medium))
-                    .foregroundStyle(Color.secondary.gradient)
-                
-                Text(folderLabel)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
         }
         .monospaced()
     }

@@ -49,6 +49,7 @@ struct QuickActionsView: View {
             .listSectionSpacing(ViewTokens.sheetSectionSpacing)
             .monospaced()
             .navigationBarTitleDisplayMode(.inline)
+            .scrollBounceBehavior(.basedOnSize)
         }
     }
 }
