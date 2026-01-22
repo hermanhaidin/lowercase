@@ -48,9 +48,9 @@ iOS:
     - Home view with all subfolders/notes
     - Search by filename + content
     - Sort by:
-        - Filename (A to Z / Z to A)
-        - Modified (New to Old / Old to New)
-        - Created (New to Old / Old to New)
+        - Filename (a to z / a to a)
+        - Modified (new to old / old to new)
+        - Created (new to old / old to new)
 - File naming
     - Default new note: `yyyy-mm-dd.md` or `untitled-1.md`
     - Titles lowercase by default; if user types uppercase, don't fight them in content, but UI chrome stays lowercase
@@ -92,8 +92,6 @@ We keep it dumb:
     - Auto-pair `() [] {} "" ''`
     - No auto-capitalize first letter of line
     - Auto-correction disabled
-- Optional niceties
-    - Word count / char count in tiny footer
 
 
 ## 7. File Structure & Naming Conventions
@@ -118,7 +116,6 @@ We keep it dumb:
 
 ## 9. `v0` Non-Goals
 
-- Live preview
 - Tags 
 - Backlinks
 - Rich embeds

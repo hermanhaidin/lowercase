@@ -364,14 +364,22 @@ final class FileStore {
     
     /// Delete a note
     func deleteNote(at url: URL) throws {
-        try fileManager.removeItem(at: url)
+        try deleteItem(at: url)
         reload()
     }
     
     /// Delete a folder and its contents
     func deleteFolder(at url: URL) throws {
-        try fileManager.removeItem(at: url)
+        try deleteItem(at: url)
         reload()
+    }
+
+    private func deleteItem(at url: URL) throws {
+        do {
+            try fileManager.trashItem(at: url, resultingItemURL: nil)
+        } catch {
+            try fileManager.removeItem(at: url)
+        }
     }
     
     // MARK: - Sorting

@@ -13,13 +13,13 @@ app launch
     │   └─ tap back → home
     ├─ long-press file → quick actions: rename, move to, delete (sheet medium detent)
     │   ├─ tap rename → filename (inline)
-    │   ├─ tap move to → move to (sheet)
+    │   ├─ tap move to → folder picker (sheet)
     │   │   ├─ tap new folder → create folder (inline) → home (note moved)
     │   │   ├─ tap folder → home (note moved)
     │   │   └─ tap sort → sort options (sheet medium detent)
     │   │   └─ tap cancel, swipe down → home
-    │   └─ tap delete → delete note (sheet medium detent)
-    │       ├─ tap delete and don't ask again → home (note deleted)
+    │   └─ tap delete → delete confirmation (sheet medium detent)
+    │       ├─ tap delete and don't ask again → home (note deleted, won't appear again)
     │       ├─ tap delete → home (note deleted)
     │       └─ tap cancel, scrim, swipe down → home
     ├─ tap expand / collapse → expand / collapse all folders
@@ -38,12 +38,12 @@ app launch
                 ├─ tap rename → filename (sheet, keyboard up)
                 │   ├─ tap save → editor (new name in principal title, keyboard down)
                 │   └─ tap cancel, scrim, swipe down → editor (keyboard down)
-                ├─ tap move to → move to (sheet)
+                ├─ tap move to → folder picker (sheet)
                 │   ├─ tap new folder → create folder (inline) → editor (note moved, keyboard down)
                 │   ├─ tap folder → editor (note moved, keyboard down)
                 │   └─ tap cancel, swipe down → editor (keyboard down)
-                └─ tap delete → delete note (sheet medium detent)
-                    ├─ tap delete and don't ask again → home (note deleted)
+                └─ tap delete → delete confirmation (sheet medium detent)
+                    ├─ tap delete and don't ask again → home (note deleted, won't appear again)
                     ├─ tap delete → home (note deleted)
                     └─ tap cancel, scrim, swipe down → editor (keyboard down)
             

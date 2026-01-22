@@ -19,18 +19,18 @@ struct OnboardingView: View {
                 
                 Text("open them anywhere, even offline")
             }
-            .monospaced()
             .frame(maxWidth: .infinity, alignment: .leading)
             
             Spacer()
             
-            Button("Create New Folder", role: .confirm) {
+            Button("create new folder", role: .confirm) {
                 onCreateFolder()
             }
             .buttonSizing(.flexible)
             .buttonStyle(.glassProminent)
             .controlSize(.large)
         }
+        .monospaced()
         .padding(.horizontal, ViewTokens.bezelPadding)
     }
 }

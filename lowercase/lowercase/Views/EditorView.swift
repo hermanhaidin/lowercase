@@ -21,6 +21,7 @@ struct EditorView: View {
     @State private var showingRenameAlert = false
     @State private var showingDeleteConfirmation = false
     @State private var showingQuickActions = false
+    @State private var pendingDeleteConfirmation = false
     @State private var newFilename: String = ""
     
     @FocusState private var isEditorFocused: Bool
@@ -73,13 +74,25 @@ struct EditorView: View {
                     renameNote()
                 }
             }
-            .confirmationDialog("Delete Note", isPresented: $showingDeleteConfirmation, titleVisibility: .visible) {
-                Button("Delete", role: .destructive) {
-                    deleteNote()
-                }
-                Button("Cancel", role: .cancel) { }
-            } message: {
-                Text("This action cannot be undone.")
+            .sheet(isPresented: $showingDeleteConfirmation) {
+                DeleteConfirmationView(
+                    name: filename,
+                    isFolder: false,
+                    onDeleteAndDontAsk: {
+                        appState.skipDeleteConfirmation = true
+                        showingDeleteConfirmation = false
+                        deleteNote()
+                    },
+                    onDelete: {
+                        showingDeleteConfirmation = false
+                        deleteNote()
+                    },
+                    onCancel: {
+                        showingDeleteConfirmation = false
+                    }
+                )
+                    .presentationDetents([.medium])
+                    .presentationDragIndicator(.visible)
             }
             .sheet(isPresented: $showingQuickActions) {
                 QuickActionsView(
@@ -94,8 +107,12 @@ struct EditorView: View {
                         showingQuickActions = false
                     },
                     onDelete: {
-                        showingDeleteConfirmation = true
                         showingQuickActions = false
+                        if appState.skipDeleteConfirmation {
+                            deleteNote()
+                        } else {
+                            pendingDeleteConfirmation = true
+                        }
                     }
                 )
                 .presentationDetents([.medium])
@@ -117,6 +134,11 @@ struct EditorView: View {
             }
             .onDisappear {
                 finalizeExitIfNeeded()
+            }
+            .onChange(of: showingQuickActions) { _, newValue in
+                guard newValue == false, pendingDeleteConfirmation else { return }
+                pendingDeleteConfirmation = false
+                showingDeleteConfirmation = true
             }
     }
 

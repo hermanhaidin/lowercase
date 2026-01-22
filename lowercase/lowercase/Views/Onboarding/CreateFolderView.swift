@@ -50,7 +50,7 @@ struct CreateFolderView: View {
             .navigationBarTitleDisplayMode(.inline)
             .scrollBounceBehavior(.basedOnSize)
         }
-        .safeAreaInset(edge: .bottom) {
+        .safeAreaBar(edge: .bottom) {
             Button("create", role: .confirm) { createFolder() }
                 .buttonSizing(.flexible)
                 .buttonStyle(.glassProminent)

@@ -18,6 +18,7 @@ Running list of product + technical decisions. Keep entries short.
 - Storage switcher is always visible even with one directory
 - Folder-based organization
 - Renaming a note = renaming the file
+- Delete moves items to Files → Recently Deleted when possible; falls back to permanent delete
 - If notes end up directly under `~/lowercase` (e.g. moved via `Files`), treat them as "orphans"
 - Users should enable "keep downloaded" for iCloud folders to ensure offline access
 
@@ -35,6 +36,7 @@ Running list of product + technical decisions. Keep entries short.
 - Make the whole folder row tappable via `contentShape(.rect)`
 - Show orphan notes below folders on Home
 - Long-press folder or note file → sheet with quick actions: rename, move to, delete
+- Delete confirmation is one reusable sheet for folders and notes
 
 ## Editor
 

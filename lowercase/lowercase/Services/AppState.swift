@@ -17,6 +17,7 @@ final class AppState {
         static let sortOption = "sortOption"
         static let appearance = "appearance"
         static let autoDeleteEmptyFiles = "autoDeleteEmptyFiles"
+        static let skipDeleteConfirmation = "skipDeleteConfirmation"
     }
     
     // MARK: - Properties
@@ -40,6 +41,11 @@ final class AppState {
     var autoDeleteEmptyFiles: Bool {
         didSet { save(autoDeleteEmptyFiles, forKey: Keys.autoDeleteEmptyFiles) }
     }
+
+    /// Whether to skip delete confirmation
+    var skipDeleteConfirmation: Bool {
+        didSet { save(skipDeleteConfirmation, forKey: Keys.skipDeleteConfirmation) }
+    }
     
     // MARK: - UserDefaults
     
@@ -60,6 +66,13 @@ final class AppState {
             self.autoDeleteEmptyFiles = true
         } else {
             self.autoDeleteEmptyFiles = defaults.bool(forKey: Keys.autoDeleteEmptyFiles)
+        }
+
+        // Default false for delete confirmation if not set
+        if defaults.object(forKey: Keys.skipDeleteConfirmation) == nil {
+            self.skipDeleteConfirmation = false
+        } else {
+            self.skipDeleteConfirmation = defaults.bool(forKey: Keys.skipDeleteConfirmation)
         }
     }
     

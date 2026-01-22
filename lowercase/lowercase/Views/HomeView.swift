@@ -21,11 +21,11 @@ struct HomeView: View {
     // Context menu state
     @State private var itemToRename: URL?
     @State private var itemToMove: URL?
-    @State private var itemToDelete: URL?
     @State private var isRenamingFolder = false
     @State private var newName = ""
     @State private var showingRenameAlert = false
-    @State private var showingDeleteConfirmation = false
+    @State private var deleteTarget: QuickActionsTarget?
+    @State private var pendingDeleteTarget: QuickActionsTarget?
     
     private struct MoveTarget: Identifiable {
         let id: URL
@@ -143,6 +143,26 @@ struct HomeView: View {
         .sheet(item: $moveTarget) { target in
             MoveToFolderView(noteURL: target.url)
         }
+        .sheet(item: $deleteTarget) { target in
+            DeleteConfirmationView(
+                name: target.name,
+                isFolder: target.kind == .folder,
+                onDeleteAndDontAsk: {
+                    appState.skipDeleteConfirmation = true
+                    deleteTarget = nil
+                    performDelete(for: target)
+                },
+                onDelete: {
+                    deleteTarget = nil
+                    performDelete(for: target)
+                },
+                onCancel: {
+                    deleteTarget = nil
+                }
+            )
+            .presentationDetents([.medium])
+            .presentationDragIndicator(.visible)
+        }
         .alert("Rename", isPresented: $showingRenameAlert) {
             TextField("Name", text: $newName)
             Button("Cancel", role: .cancel) {
@@ -152,27 +172,19 @@ struct HomeView: View {
                 performRename()
             }
         }
-        .confirmationDialog(
-            "Delete",
-            isPresented: $showingDeleteConfirmation,
-            titleVisibility: .visible
-        ) {
-            Button("Delete", role: .destructive) {
-                performDelete()
-            }
-            Button("Cancel", role: .cancel) {
-                itemToDelete = nil
-            }
-        } message: {
-            Text("This action cannot be undone.")
-        }
         .onAppear {
             fileStore.reload()
         }
         .onChange(of: quickActionsTarget) { _, newValue in
-            guard newValue == nil, let pendingMoveTarget else { return }
-            moveTarget = pendingMoveTarget
-            self.pendingMoveTarget = nil
+            guard newValue == nil else { return }
+            if let pendingMoveTarget {
+                moveTarget = pendingMoveTarget
+                self.pendingMoveTarget = nil
+            }
+            if let pendingDeleteTarget {
+                deleteTarget = pendingDeleteTarget
+                self.pendingDeleteTarget = nil
+            }
         }
         .onChange(of: showingStorageSheet) { _, newValue in
             guard newValue == false, pendingSettingsFromStorage else { return }
@@ -202,24 +214,16 @@ struct HomeView: View {
         newName = ""
     }
     
-    private func performDelete() {
-        guard let url = itemToDelete else { return }
-        
+    private func performDelete(for target: QuickActionsTarget) {
         do {
-            // Check if it's a directory
-            var isDirectory: ObjCBool = false
-            if FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory) {
-                if isDirectory.boolValue {
-                    try fileStore.deleteFolder(at: url)
-                } else {
-                    try fileStore.deleteNote(at: url)
-                }
+            if target.kind == .folder {
+                try fileStore.deleteFolder(at: target.url)
+            } else {
+                try fileStore.deleteNote(at: target.url)
             }
         } catch {
             print("Delete failed: \(error)")
         }
-        
-        itemToDelete = nil
     }
     
     // MARK: - Context Menu Builders
@@ -239,9 +243,12 @@ struct HomeView: View {
     }
     
     private func handleDelete(for target: QuickActionsTarget) {
-        itemToDelete = target.url
-        showingDeleteConfirmation = true
         quickActionsTarget = nil
+        if appState.skipDeleteConfirmation {
+            performDelete(for: target)
+        } else {
+            pendingDeleteTarget = target
+        }
     }
     
     // MARK: - Content List
