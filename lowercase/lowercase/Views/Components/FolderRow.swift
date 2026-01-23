@@ -30,7 +30,7 @@ struct FolderRow: View {
                 Image(systemName: "folder.fill")
                     .font(.title3.weight(.medium))
                     .foregroundStyle(Color.blue.gradient)
-                    .frame(width: folderIconWidth)
+                    .frame(width: folderIconWidth, height: folderIconWidth)
                 
                 Text(folder.name)
                     .foregroundStyle(.primary)

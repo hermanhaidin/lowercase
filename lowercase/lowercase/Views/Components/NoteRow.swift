@@ -23,7 +23,7 @@ struct NoteRow: View {
             Image(systemName: "text.document")
                 .font(.title3.weight(.medium))
                 .symbolRenderingMode(.multicolor)
-                .frame(width: noteIconWidth)
+                .frame(width: noteIconWidth, height: noteIconWidth)
             
             Text(note.filename)
                 .foregroundStyle(.primary)

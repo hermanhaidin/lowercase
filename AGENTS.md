@@ -38,6 +38,7 @@ If a suggestion violates these rules, do not propose it.
 - `Dynamic Type` over specific font sizes
 - place view logic into view models or similar, so it can be tested
 - no `AnyView` unless required
+- when hiding scroll view indicators, use the `scrollIndicators(.hidden)`
 
 ## Xcode Project Invariants
 

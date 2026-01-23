@@ -15,7 +15,7 @@ struct FolderNameInputRow: View {
             Image(systemName: "folder")
                 .font(.title3.weight(.medium))
                 .foregroundStyle(Color.blue.gradient)
-                .frame(width: iconWidth)
+                .frame(width: iconWidth, height: iconWidth)
                 .padding(.leading, iconLeadingPadding)
             
             TextField(placeholder, text: $name)

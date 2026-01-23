@@ -27,7 +27,7 @@ struct FolderPickerRow: View {
                 Image(systemName: "folder.fill")
                     .font(.title3.weight(.medium))
                     .foregroundStyle(Color.blue.gradient)
-                    .frame(width: iconWidth)
+                    .frame(width: iconWidth, height: iconWidth)
                     .padding(.leading, iconLeadingPadding)
                 
                 Text(folder.name)

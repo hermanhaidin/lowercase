@@ -8,6 +8,7 @@ import SwiftUI
 struct SelectFolderView: View {
     @Environment(FileStore.self) private var fileStore
     @Environment(AppState.self) private var appState
+    @Environment(\.dismiss) private var dismiss
     /// Called when a note is created - HomeView will handle navigation to Editor
     var onNoteCreated: ((Note) -> Void)
     
@@ -44,7 +45,12 @@ struct SelectFolderView: View {
             onSelectFolder: createNoteInFolder
         )
         .navigationBarTitleDisplayMode(.inline)
+        .scrollIndicators(.hidden)
         .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("close", systemImage: "xmark") { dismiss() }
+            }
+            
             ToolbarItem(placement: .title) {
                 Text("select folder")
                     .foregroundStyle(.secondary)

@@ -54,7 +54,7 @@ app launch
 When breaking views up prefer `View` structs over computed properties or functions returning `some View`
 
 - `~/Views/CreateNote/`
-  - `SelectFolderView.swift` - select folder to put a new note in (pushed)
+  - `SelectFolderView.swift` - select folder to put a new note in (modal)
     - `FolderPickerListView` - new folder button + list all folder picker tree views
     - `FolderPickerTreeView` - folder picker tree view with one depth of subfolders and notes (recursive)
     - `FolderNameInputRow` - new folder name input (inline)
@@ -80,9 +80,10 @@ When breaking views up prefer `View` structs over computed properties or functio
     - `FolderPickerTreeView` - folder picker tree view with one depth of subfolders and notes (recursive)
     - `FolderNameInputRow` - new folder name input (inline)
     - `FolderPickerRow` - folder picker in a tree view (indent + SF symbol + folder name + disclosure chevron)
-  - `DeleteFileView.swift` - confirm deletion of a folder or note (modal)
+  - `DeleteConfirmationView.swift` - confirm deletion of a folder or note (modal)
 
 - `~/Views/`
+  - `AppRootView.swift` - root `NavigationStack`, routes onboarding vs home, and hosts typed destinations
   - `HomeView.swift` - browse folders and notes (pushed)
     - `FolderListView` - list all folder tree views + orphan notes
     - `FolderTreeView` - folder tree view with one depth of subfolders and notes (recursive)

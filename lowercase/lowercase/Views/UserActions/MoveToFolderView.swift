@@ -49,6 +49,7 @@ struct MoveToFolderView: View {
                 onSelectFolder: moveNoteToFolder
             )
             .navigationBarTitleDisplayMode(.inline)
+            .scrollIndicators(.hidden)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("close", systemImage: "xmark") { dismiss() }
@@ -145,4 +146,5 @@ struct MoveToFolderView: View {
 #Preview {
     MoveToFolderView(noteURL: URL(fileURLWithPath: "/test/daily/note.md"))
         .environment(FileStore())
+        .environment(AppState())
 }

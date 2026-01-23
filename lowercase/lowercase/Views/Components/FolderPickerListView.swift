@@ -35,7 +35,7 @@ struct FolderPickerListView: View {
                             HStack(spacing: gapWidth) {
                                 Image(systemName: "plus")
                                     .foregroundStyle(.tint)
-                                    .frame(width: folderIconWidth)
+                                    .frame(width: folderIconWidth, height: folderIconWidth)
                                 
                                 Text("new folder")
                                     .foregroundStyle(.tint)

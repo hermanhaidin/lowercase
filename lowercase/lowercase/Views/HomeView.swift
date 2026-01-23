@@ -94,6 +94,7 @@ struct HomeView: View {
                     showingNewNoteSheet = true
                 } label: {
                     Image(systemName: "plus")
+                        .font(.title3)
                         .foregroundStyle(.white)
                         .frame(width: 48, height: 48)
                 }
@@ -276,14 +277,12 @@ struct HomeView: View {
         } label: {
             HStack(spacing: folderGapWidth) {
                 Image(systemName: "circle.fill")
-                    .font(.caption2)
                     .foregroundStyle(.green.gradient)
                 
                 Text(appState.currentRoot.shortName)
                     .monospaced()
                 
                 Image(systemName: "chevron.up.chevron.down")
-                    .font(.caption2.bold())
                     .foregroundStyle(.secondary)
             }
             .frame(height: 48)
@@ -401,6 +400,7 @@ private struct HomeContentList: View {
             }
         }
         .contentMargins(.horizontal, 16)
+        .scrollIndicators(.hidden)
         .monospaced()
     }
 }
