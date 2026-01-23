@@ -23,12 +23,10 @@ struct OnboardingView: View {
             
             Spacer()
             
-            Button("create new folder", role: .confirm) {
-                onCreateFolder()
-            }
-            .buttonSizing(.flexible)
-            .buttonStyle(.glassProminent)
-            .controlSize(.large)
+            Button("create new folder", role: .confirm) { onCreateFolder() }
+                .buttonSizing(.flexible)
+                .buttonStyle(.glassProminent)
+                .controlSize(.large)
         }
         .monospaced()
         .padding(.horizontal, ViewTokens.bezelPadding)

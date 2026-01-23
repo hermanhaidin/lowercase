@@ -46,7 +46,6 @@ struct CreateFolderView: View {
                     .listRowBackground(Color.clear)
                 }
             }
-            .monospaced()
             .navigationBarTitleDisplayMode(.inline)
             .scrollBounceBehavior(.basedOnSize)
         }
@@ -55,7 +54,6 @@ struct CreateFolderView: View {
                 .buttonSizing(.flexible)
                 .buttonStyle(.glassProminent)
                 .controlSize(.large)
-                .monospaced()
                 .padding(.horizontal, ViewTokens.bezelPadding)
                 .padding(.bottom, isNameFocused ? 16 : 0)
                 .disabled(!canCreate)
@@ -64,9 +62,9 @@ struct CreateFolderView: View {
             ToolbarItem(placement: .title) {
                 Text("new folder")
                     .foregroundStyle(.secondary)
-                    .monospaced()
             }
         }
+        .monospaced()
         .onAppear {
             isNameFocused = true
         }

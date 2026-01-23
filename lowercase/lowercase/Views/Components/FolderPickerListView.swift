@@ -11,7 +11,7 @@ struct FolderPickerListView: View {
     let folderIconWidth: CGFloat
     let showsCurrentLabel: Bool
     let disableCurrentSelection: Bool
-    let onCreateFolder: () -> Void
+    let onSubmit: () -> Void
     let onSelectFolder: (Folder) -> Void
     
     var body: some View {
@@ -20,8 +20,7 @@ struct FolderPickerListView: View {
                 if isCreatingFolder {
                     FolderNameInputRow(
                         name: $newFolderName,
-                        onSubmit: onCreateFolder,
-                        onCreate: onCreateFolder,
+                        onSubmit: onSubmit,
                         isFocused: $isFolderNameFocused
                     )
                 } else {

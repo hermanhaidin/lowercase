@@ -14,12 +14,19 @@ struct SelectFolderView: View {
     @State private var isCreatingFolder = false
     @State private var newFolderName = ""
     @State private var showingSortSheet = false
+    @State private var showDoneButton = false
     
     @FocusState private var isFolderNameFocused: Bool
     
     @ScaledMetric private var gapWidth = ViewTokens.folderRowGap
     @ScaledMetric private var indentWidth = ViewTokens.folderRowIndent
     @ScaledMetric private var folderIconWidth = ViewTokens.folderRowIconSize
+    
+    @Namespace private var namespace
+    
+    private var trimmedFolderName: String {
+        newFolderName.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
     
     var body: some View {
         FolderPickerListView(
@@ -33,39 +40,65 @@ struct SelectFolderView: View {
             folderIconWidth: folderIconWidth,
             showsCurrentLabel: false,
             disableCurrentSelection: false,
-            onCreateFolder: createFolderAndNote,
+            onSubmit: handleSubmit,
             onSelectFolder: createNoteInFolder
         )
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .title) {
-                    Text("select folder")
-                        .foregroundStyle(.secondary)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .title) {
+                Text("select folder")
+                    .foregroundStyle(.secondary)
+            }
+            
+            if showDoneButton {
+                ToolbarItem {
+                    Button {
+                        handleSubmit()
+                    } label: {
+                        Text("done")
+                            .foregroundStyle(.white)
+                    }
+                    .buttonStyle(.glassProminent)
+                    .glassEffectID("action", in: namespace)
                 }
-                
-                ToolbarItem(placement: .automatic) {
+            } else {
+                ToolbarItem {
                     Button("sort") { showingSortSheet = true }
+                        .glassEffectID("action", in: namespace)
                 }
             }
-            .sheet(isPresented: $showingSortSheet) {
-                SortByView(selectedOption: appState.sortOption) { option in
-                    applySort(option)
-                    showingSortSheet = false
-                }
-                .presentationDetents([.medium])
-                .presentationDragIndicator(.visible)
+        }
+        .sheet(isPresented: $showingSortSheet) {
+            SortByView(selectedOption: appState.sortOption) { option in
+                applySort(option)
+                showingSortSheet = false
             }
-            .monospaced()
+            .presentationDetents([.medium])
+            .presentationDragIndicator(.visible)
+        }
+        .monospaced()
+        .onChange(of: isFolderNameFocused) { _, focused in
+            withAnimation {
+                showDoneButton = focused
+            }
+        }
     }
     
     // MARK: - Actions
     
+    private func handleSubmit() {
+        if trimmedFolderName.isEmpty {
+            withAnimation {
+                isFolderNameFocused = false
+            }
+        } else {
+            createFolderAndNote()
+        }
+    }
+    
     private func createFolderAndNote() {
-        let trimmed = newFolderName.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return }
-        
         do {
-            let folderURL = try fileStore.createFolder(named: trimmed)
+            let folderURL = try fileStore.createFolder(named: trimmedFolderName)
             let note = try fileStore.createNote(in: folderURL)
             onNoteCreated(note)
         } catch {
