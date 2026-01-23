@@ -90,6 +90,7 @@ struct SelectFolderView: View {
         if trimmedFolderName.isEmpty {
             withAnimation {
                 isFolderNameFocused = false
+                isCreatingFolder = false
             }
         } else {
             createFolderAndNote()

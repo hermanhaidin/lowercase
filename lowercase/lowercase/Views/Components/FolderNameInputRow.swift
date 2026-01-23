@@ -12,5 +12,6 @@ struct FolderNameInputRow: View {
             .textInputAutocapitalization(.never)
             .focused($isFocused)
             .onSubmit { onSubmit() }
+            .task { isFocused = true }
     }
 }

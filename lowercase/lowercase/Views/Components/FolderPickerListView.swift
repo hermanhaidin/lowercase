@@ -26,7 +26,6 @@ struct FolderPickerListView: View {
                 } else {
                     Button {
                         isCreatingFolder = true
-                        isFolderNameFocused = true
                     } label: {
                         HStack(spacing: gapWidth) {
                             Image(systemName: "plus")

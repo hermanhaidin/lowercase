@@ -63,6 +63,13 @@ Running list of product + technical decisions. Keep entries short.
 - Avoid mixing top and bottom toolbar items in the same view; use `safeAreaBar` for bottom controls
 - Custom app themes are out of scope for v0
 
+## Toolbar animations
+
+- To animate between toolbar buttons (e.g. "sort" ↔ "done"), use separate `ToolbarItem` blocks with a shared `glassEffectID`
+- Attach `glassEffectID` to the `Button`, not its label content
+- Wrap the state change that triggers the toolbar switch in `withAnimation` — otherwise the transition is instant
+- Use a local `@Namespace` for glass effect IDs scoped to the view
+
 ## Navigation
 
 - Preserve the system back swipe gesture; avoid custom back buttons that disable it
