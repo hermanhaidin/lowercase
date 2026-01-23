@@ -88,9 +88,9 @@ struct SelectFolderView: View {
     
     private func handleSubmit() {
         if trimmedFolderName.isEmpty {
+            isCreatingFolder = false
             withAnimation {
                 isFolderNameFocused = false
-                isCreatingFolder = false
             }
         } else {
             createFolderAndNote()

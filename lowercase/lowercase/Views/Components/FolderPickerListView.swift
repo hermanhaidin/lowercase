@@ -17,33 +17,39 @@ struct FolderPickerListView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 0) {
-                if isCreatingFolder {
-                    FolderNameInputRow(
-                        name: $newFolderName,
-                        onSubmit: onSubmit,
-                        isFocused: $isFolderNameFocused
-                    )
-                } else {
-                    Button {
-                        isCreatingFolder = true
-                    } label: {
-                        HStack(spacing: gapWidth) {
-                            Image(systemName: "plus")
-                                .fontWeight(.medium)
-                                .foregroundStyle(.tint)
-                                .frame(width: folderIconWidth)
-                            
-                            Text("new folder")
-                                .foregroundStyle(.tint)
-                                .lineLimit(1)
+                Group {
+                    if isCreatingFolder {
+                        FolderNameInputRow(
+                            name: $newFolderName,
+                            gapWidth: gapWidth,
+                            iconWidth: folderIconWidth,
+                            iconLeadingPadding: 0,
+                            rowPadding: EdgeInsets(top: 10, leading: 8, bottom: 10, trailing: 8),
+                            onSubmit: onSubmit,
+                            isFocused: $isFolderNameFocused
+                        )
+                    } else {
+                        Button {
+                            isCreatingFolder = true
+                        } label: {
+                            HStack(spacing: gapWidth) {
+                                Image(systemName: "plus")
+                                    .foregroundStyle(.tint)
+                                    .frame(width: folderIconWidth)
+                                
+                                Text("new folder")
+                                    .foregroundStyle(.tint)
+                                    .lineLimit(1)
+                            }
+                            .padding(.vertical, 10)
+                            .padding(.horizontal, 8)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .contentShape(.rect)
                         }
-                        .padding(.vertical, 10)
-                        .padding(.horizontal, 8)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .contentShape(.rect)
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
                 }
+                .animation(nil, value: isCreatingFolder)
                 
                 ForEach(folders) { folder in
                     FolderPickerTreeView(
