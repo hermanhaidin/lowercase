@@ -37,17 +37,20 @@ struct DeleteConfirmationView: View {
                 Section {
                     Button("delete and don't ask again", role: .destructive, action: onDeleteAndDontAsk)
                         .frame(maxWidth: .infinity, alignment: .center)
+                        .multilineTextAlignment(.center)
                 }
                 
                 Section {
                     Button("delete", role: .destructive, action: onDelete)
                         .frame(maxWidth: .infinity, alignment: .center)
+                        .multilineTextAlignment(.center)
                 }
                 
                 Section {
                     Button("cancel", role: .cancel, action: onCancel)
                         .foregroundStyle(.primary)
                         .frame(maxWidth: .infinity, alignment: .center)
+                        .multilineTextAlignment(.center)
                 }
             }
             .listSectionSpacing(ViewTokens.sheetSectionSpacing)

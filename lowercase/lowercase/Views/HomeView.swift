@@ -9,12 +9,12 @@ struct HomeView: View {
     @Environment(FileStore.self) private var fileStore
     @Environment(AppState.self) private var appState
     
-    @State private var showingNewNote = false
-    @State private var showingSettingsDestination = false
-    @State private var pendingNoteDestination: NoteDestination?
+    @Binding var navigationPath: NavigationPath
+    
+    @State private var showingNewNoteSheet = false
     @State private var showingSortSheet = false
     @State private var showingStorageSheet = false
-    @State private var pendingSettingsFromStorage = false
+    @State private var pendingRouteAfterSheet: AppRoute?
     @State private var quickActionsTarget: QuickActionsTarget?
     @State private var pendingMoveTarget: MoveTarget?
     
@@ -58,11 +58,6 @@ struct HomeView: View {
         }
     }
     
-    private struct NoteDestination: Identifiable, Hashable {
-        let note: Note
-        var id: URL { note.url }
-    }
-
     @ScaledMetric private var folderGapWidth = ViewTokens.folderRowGap
     @ScaledMetric private var noteGapWidth = ViewTokens.noteRowGap
     @ScaledMetric private var chevronIconWidth = ViewTokens.disclosureIconSize
@@ -96,7 +91,7 @@ struct HomeView: View {
                     .buttonStyle(.plain)
                 
                 Button {
-                    showingNewNote = true
+                    showingNewNoteSheet = true
                 } label: {
                     Image(systemName: "plus")
                         .foregroundStyle(.white)
@@ -106,17 +101,13 @@ struct HomeView: View {
             }
         }
         .ignoresSafeArea(.keyboard, edges: .bottom)
-        .navigationDestination(isPresented: $showingNewNote) {
-            SelectFolderView { note in
-                pendingNoteDestination = NoteDestination(note: note)
-                showingNewNote = false
+        .sheet(isPresented: $showingNewNoteSheet) {
+            NavigationStack {
+                SelectFolderView { note in
+                    showingNewNoteSheet = false
+                    navigationPath.append(AppRoute.editor(note))
+                }
             }
-        }
-        .navigationDestination(isPresented: $showingSettingsDestination) {
-            SettingsView()
-        }
-        .navigationDestination(item: $pendingNoteDestination) { destination in
-            EditorView(note: destination.note)
         }
         .sheet(isPresented: $showingSortSheet) {
             SortByView(selectedOption: appState.sortOption) { option in
@@ -126,12 +117,12 @@ struct HomeView: View {
                 .presentationDetents([.medium])
                 .presentationDragIndicator(.visible)
         }
-        .sheet(isPresented: $showingStorageSheet) {
+        .sheet(isPresented: $showingStorageSheet, onDismiss: handleStorageSheetDismiss) {
             StorageSwitcherView(
                 selectedRoot: appState.currentRoot,
                 onSelectLocal: selectLocalRoot,
                 onOpenSettings: {
-                    pendingSettingsFromStorage = true
+                    pendingRouteAfterSheet = .settings
                     showingStorageSheet = false
                 }
             )
@@ -193,11 +184,6 @@ struct HomeView: View {
                 deleteTarget = pendingDeleteTarget
                 self.pendingDeleteTarget = nil
             }
-        }
-        .onChange(of: showingStorageSheet) { _, newValue in
-            guard newValue == false, pendingSettingsFromStorage else { return }
-            pendingSettingsFromStorage = false
-            showingSettingsDestination = true
         }
     }
     
@@ -315,6 +301,16 @@ struct HomeView: View {
         fileStore.currentRoot = .local
         fileStore.reload()
     }
+
+    private func handleStorageSheetDismiss() {
+        guard let pendingRouteAfterSheet else { return }
+        let route = pendingRouteAfterSheet
+        self.pendingRouteAfterSheet = nil
+        Task {
+            await Task.yield()
+            navigationPath.append(route)
+        }
+    }
     
     private func showQuickActions(for folder: Folder) {
         quickActionsTarget = QuickActionsTarget(url: folder.url, kind: .folder, name: folder.name)
@@ -386,9 +382,7 @@ private struct HomeContentList: View {
                 }
                 
                 ForEach(orphanNotes) { note in
-                    NavigationLink {
-                        EditorView(note: note)
-                    } label: {
+                    NavigationLink(value: AppRoute.editor(note)) {
                         NoteRow(
                             note: note,
                             depth: 0,
@@ -412,8 +406,18 @@ private struct HomeContentList: View {
 }
 
 #Preview {
-    HomeView()
-        .environment(FileStore())
-        .environment(AppState())
+    HomeViewPreview()
+}
+
+private struct HomeViewPreview: View {
+    @State private var navigationPath = NavigationPath()
+    
+    var body: some View {
+        NavigationStack(path: $navigationPath) {
+            HomeView(navigationPath: $navigationPath)
+                .environment(FileStore())
+                .environment(AppState())
+        }
+    }
 }
 

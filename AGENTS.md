@@ -26,6 +26,8 @@ If a suggestion violates these rules, do not propose it.
 - `foregroundStyle` over `foregroundColor`
 - `clipShape(.rect(cornerRadius:))` over `cornerRadius()`
 - `NavigationStack` over `NavigationView`
+- use a single typed route enum + `NavigationPath` for pushes; prefer `navigationDestination(for:)` + `NavigationLink(value:)`
+- avoid nested `NavigationStack` inside views that are pushed onto an existing stack
 - preserve the system back swipe gesture
 - `@Observable` over `ObservableObject`
 - `Button` over `onTapGesture`

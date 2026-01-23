@@ -32,9 +32,7 @@ struct FolderTreeView: View {
             if isExpanded(folder.url) {
                 VStack(spacing: 0) {
                     ForEach(folder.notes) { note in
-                        NavigationLink {
-                            EditorView(note: note)
-                        } label: {
+                        NavigationLink(value: AppRoute.editor(note)) {
                             NoteRow(
                                 note: note,
                                 depth: depth + 1,

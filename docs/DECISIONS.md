@@ -73,3 +73,5 @@ Running list of product + technical decisions. Keep entries short.
 ## Navigation
 
 - Preserve the system back swipe gesture; avoid custom back buttons that disable it
+- Use a single typed route enum + a single `NavigationPath`; prefer `navigationDestination(for:)` + `NavigationLink(value:)` for stack pushes
+- Present `SelectFolderView` as a sheet, then push `EditorView` from Home so back always returns to Home

@@ -4,23 +4,23 @@ struct AppRootView: View {
     @Environment(FileStore.self) private var fileStore
     @State private var navigationPath = NavigationPath()
     
-    private enum Route: Hashable {
-        case createFolder
-    }
-    
     var body: some View {
         NavigationStack(path: $navigationPath) {
             Group {
                 if fileStore.shouldShowOnboarding {
-                    OnboardingView(onCreateFolder: { navigationPath.append(Route.createFolder) })
+                    OnboardingView(onCreateFolder: { navigationPath.append(AppRoute.createFolder) })
                 } else {
-                    HomeView()
+                    HomeView(navigationPath: $navigationPath)
                 }
             }
-            .navigationDestination(for: Route.self) { route in
+            .navigationDestination(for: AppRoute.self) { route in
                 switch route {
                 case .createFolder:
                     CreateFolderView()
+                case let .editor(note):
+                    EditorView(note: note)
+                case .settings:
+                    SettingsView()
                 }
             }
         }
