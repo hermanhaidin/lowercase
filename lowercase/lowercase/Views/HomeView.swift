@@ -28,12 +28,15 @@ struct HomeView: View {
     @State private var pendingDeleteTarget: QuickActionsTarget?
     
     private struct MoveTarget: Identifiable {
-        let id: URL
-        let url: URL
-        
-        init(_ url: URL) {
-            self.id = url
-            self.url = url
+        let item: MoveToFolderView.MoveItem
+
+        var id: URL {
+            switch item {
+            case .note(let url):
+                return url
+            case .folder(let url):
+                return url
+            }
         }
     }
     
@@ -84,7 +87,7 @@ struct HomeView: View {
             ToolbarSpacer(.fixed)
             ToolbarItem(placement: .automatic) { sortButton }
         }
-        .safeAreaInset(edge: .bottom) {
+        .safeAreaBar(edge: .bottom) {
             HStack {
                 storageSwitcher
                     .glassEffect(.regular.interactive(), in: .capsule)
@@ -132,7 +135,7 @@ struct HomeView: View {
         }
         .sheet(item: $quickActionsTarget) { target in
             QuickActionsView(
-                canMove: target.kind == .note,
+                canMove: true,
                 onRename: { handleRename(for: target) },
                 onMove: { handleMove(for: target) },
                 onDelete: { handleDelete(for: target) }
@@ -141,7 +144,7 @@ struct HomeView: View {
             .presentationDragIndicator(.visible)
         }
         .sheet(item: $moveTarget) { target in
-            MoveToFolderView(noteURL: target.url)
+            MoveToFolderView(item: target.item)
         }
         .sheet(item: $deleteTarget) { target in
             DeleteConfirmationView(
@@ -232,8 +235,12 @@ struct HomeView: View {
     }
     
     private func handleMove(for target: QuickActionsTarget) {
-        guard target.kind == .note else { return }
-        pendingMoveTarget = MoveTarget(target.url)
+        switch target.kind {
+        case .folder:
+            pendingMoveTarget = MoveTarget(item: .folder(url: target.url))
+        case .note:
+            pendingMoveTarget = MoveTarget(item: .note(url: target.url))
+        }
         quickActionsTarget = nil
     }
     

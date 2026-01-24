@@ -15,6 +15,7 @@ If a suggestion violates these rules, do not propose it.
 - iOS 26+ target
 - Swift 6.2+
 - modern Swift concurrency (async/await, Task, actors)
+- use modern Foundation URL APIs (e.g. `URL.documentsDirectory`, `appending(path:)`) for path construction and clarity
 - avoid UIKit unless requested
 - no GCD
 - modern Foundation APIs

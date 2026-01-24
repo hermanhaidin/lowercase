@@ -23,6 +23,7 @@ struct EditorView: View {
     @State private var showingQuickActions = false
     @State private var pendingDeleteConfirmation = false
     @State private var newFilename: String = ""
+    @State private var pendingMoveSourceURL: URL?
 
     @FocusState private var isEditorFocused: Bool
 
@@ -110,6 +111,8 @@ struct EditorView: View {
                     showingQuickActions = false
                 },
                 onMove: {
+                    pendingMoveSourceURL = noteURL
+                    saveTask?.cancel()
                     showingMoveSheet = true
                     showingQuickActions = false
                 },
@@ -127,11 +130,16 @@ struct EditorView: View {
         }
         .sheet(isPresented: $showingMoveSheet) {
             MoveToFolderView(
-                noteURL: noteURL,
+                item: .note(url: noteURL),
                 onMoved: { newURL in
                     // Update the editor to keep saving to the moved location (prevents "copy" behavior)
+                    let oldURL = pendingMoveSourceURL
                     noteURL = newURL
                     filename = newURL.deletingPathExtension().lastPathComponent
+                    if let oldURL, oldURL != newURL, FileManager.default.fileExists(atPath: oldURL.path) {
+                        try? fileStore.deleteNote(at: oldURL)
+                    }
+                    pendingMoveSourceURL = nil
                     fileStore.reload()
                 }
             )
@@ -200,7 +208,7 @@ struct EditorView: View {
         let baseFilename = noteURL.deletingPathExtension().lastPathComponent
         if filename != baseFilename {
             return baseDir
-                .appendingPathComponent(filename)
+                .appending(path: filename)
                 .appendingPathExtension("md")
         }
         return noteURL

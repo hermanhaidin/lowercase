@@ -42,7 +42,7 @@ enum StorageRoot: String, CaseIterable, Identifiable {
             return localDocuments
         case .icloud:
             // Documents subfolder IS the app folder in iCloud Drive ("iCloud Drive/lowercase/")
-            return icloudContainer?.appendingPathComponent("Documents")
+            return icloudContainer?.appending(path: "Documents")
         }
     }
     

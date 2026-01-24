@@ -22,6 +22,16 @@ Running list of product + technical decisions. Keep entries short.
 - If notes end up directly under `~/lowercase` (e.g. moved via `Files`), treat them as "orphans"
 - Users should enable "keep downloaded" for iCloud folders to ensure offline access
 
+## FileStore & URLs
+
+- File URLs are the source of truth; folder and note identity = URL
+- All file operations are scoped to the current storage root
+- Root is a first-class destination; treat root as `rootURL`, not a fake folder
+- Moving a folder into itself or its descendants is invalid; filter in UI and guard in FileStore
+- No-op moves are allowed; selecting current parent or root (when already there) just dismisses
+- FileStore is the only layer that mutates the filesystem
+- If a move happens while a note is open, the editor must update its URL and avoid recreating the old file
+
 ## Onboarding
 
 - Shown when no lowercase directory exists or lowercase directories are empty
@@ -36,6 +46,7 @@ Running list of product + technical decisions. Keep entries short.
 - Make the whole folder row tappable via `contentShape(.rect)`
 - Show orphan notes below folders on Home
 - Long-press folder or note file → sheet with quick actions: rename, move to, delete
+- Users can move both folders and notes
 - Delete confirmation is one reusable sheet for folders and notes
 
 ## Editor

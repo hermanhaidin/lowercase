@@ -14,13 +14,26 @@ app launch
     ├─ long-press file → quick actions: rename, move to, delete (sheet medium detent)
     │   ├─ tap rename → filename (inline)
     │   ├─ tap move to → folder picker (sheet)
-    │   │   ├─ tap new folder → create folder (inline) → home (note moved)
+    │   │   ├─ tap `/ root` → home (note moved)
+    │   │   ├─ tap `+ new folder` → create folder (inline) → home (note moved)
     │   │   ├─ tap folder → home (note moved)
     │   │   └─ tap sort → sort options (sheet medium detent)
     │   │   └─ tap cancel, swipe down → home
     │   └─ tap delete → delete confirmation (sheet medium detent)
     │       ├─ tap delete and don't ask again → home (note deleted, won't appear again)
     │       ├─ tap delete → home (note deleted)
+    │       └─ tap cancel, scrim, swipe down → home
+    ├─ long-press folder → quick actions: rename, move to, delete (sheet medium detent)
+    │   ├─ tap rename → foldername (inline)
+    │   ├─ tap move to → folder picker (sheet)
+    │   │   ├─ tap `/ root` → home (folder moved)
+    │   │   ├─ tap `+ new folder` → create folder (inline) → home (folder moved)
+    │   │   ├─ tap folder → home (folder moved)
+    │   │   └─ tap sort → sort options (sheet medium detent)
+    │   │   └─ tap cancel, swipe down → home
+    │   └─ tap delete → delete confirmation (sheet medium detent)
+    │       ├─ tap delete and don't ask again → home (folder deleted, won't appear again)
+    │       ├─ tap delete → home (folder deleted)
     │       └─ tap cancel, scrim, swipe down → home
     ├─ tap expand / collapse → expand / collapse all folders
     ├─ tap sort → sort options: name, modified, created (sheet medium detent)
@@ -31,7 +44,8 @@ app launch
     │   └─ tap settings → settings (pushed)
     │       └─ tap back → home
     └─ tap `+` → select folder (pushed)
-        ├─ tap new folder → create folder (inline) → editor (pushed, keyboard up)
+        ├─ tap `/ root` → editor (pushed, keyboard up)
+        ├─ tap `+ new folder` → create folder (inline) → editor (pushed, keyboard up)
         └─ tap folder → editor (pushed, keyboard up)
             ├─ tap back → home
             └─ tap ellipsis → quick actions: rename, move to, delete (sheet medium detent)
@@ -39,7 +53,8 @@ app launch
                 │   ├─ tap save → editor (new name in principal title, keyboard down)
                 │   └─ tap cancel, scrim, swipe down → editor (keyboard down)
                 ├─ tap move to → folder picker (sheet)
-                │   ├─ tap new folder → create folder (inline) → editor (note moved, keyboard down)
+                │   ├─ tap `/ root` → editor (note moved, keyboard down)
+                │   ├─ tap `+ new folder` → create folder (inline) → editor (note moved, keyboard down)
                 │   ├─ tap folder → editor (note moved, keyboard down)
                 │   └─ tap cancel, swipe down → editor (keyboard down)
                 └─ tap delete → delete confirmation (sheet medium detent)

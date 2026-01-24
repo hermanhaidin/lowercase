@@ -14,7 +14,7 @@ struct FolderNameInputRow: View {
         HStack(spacing: gapWidth) {
             Image(systemName: "folder")
                 .font(.title3.weight(.medium))
-                .foregroundStyle(Color.blue.gradient)
+                .foregroundStyle(.blue)
                 .frame(width: iconWidth, height: iconWidth)
                 .padding(.leading, iconLeadingPadding)
             

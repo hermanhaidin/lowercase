@@ -31,7 +31,7 @@ struct FolderPickerRow: View {
                     .padding(.leading, iconLeadingPadding)
                 
                 Text(folder.name)
-                    .foregroundStyle(isCurrent ? .secondary : .primary)
+                    .foregroundStyle(isCurrent && showsCurrentLabel ? .secondary : .primary)
                     .lineLimit(1)
                 
                 Spacer()

@@ -13,11 +13,33 @@ struct FolderPickerListView: View {
     let disableCurrentSelection: Bool
     let onSubmit: () -> Void
     let onSelectFolder: (Folder) -> Void
+    let onSelectRoot: () -> Void
     
     var body: some View {
         ScrollView {
             VStack(spacing: 0) {
                 Group {
+                    Button {
+                        onSelectRoot()
+                    } label: {
+                        HStack(spacing: gapWidth) {
+                            Image(systemName: "slash.circle.fill")
+                                .font(.title3)
+                                .foregroundStyle(.tint)
+                                .frame(width: folderIconWidth, height: folderIconWidth)
+                                .symbolRenderingMode(.hierarchical)
+
+                            Text("root")
+                                .foregroundStyle(.tint)
+                                .lineLimit(1)
+                        }
+                        .padding(.vertical, 10)
+                        .padding(.horizontal, 8)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(.rect)
+                    }
+                    .buttonStyle(.plain)
+
                     if isCreatingFolder {
                         FolderNameInputRow(
                             name: $newFolderName,
@@ -33,9 +55,11 @@ struct FolderPickerListView: View {
                             isCreatingFolder = true
                         } label: {
                             HStack(spacing: gapWidth) {
-                                Image(systemName: "plus")
+                                Image(systemName: "plus.circle.fill")
+                                    .font(.title3)
                                     .foregroundStyle(.tint)
                                     .frame(width: folderIconWidth, height: folderIconWidth)
+                                    .symbolRenderingMode(.hierarchical)
                                 
                                 Text("new folder")
                                     .foregroundStyle(.tint)

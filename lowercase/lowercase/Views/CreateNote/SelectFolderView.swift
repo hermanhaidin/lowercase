@@ -42,7 +42,8 @@ struct SelectFolderView: View {
             showsCurrentLabel: false,
             disableCurrentSelection: false,
             onSubmit: handleSubmit,
-            onSelectFolder: createNoteInFolder
+            onSelectFolder: createNoteInFolder,
+            onSelectRoot: createNoteInRoot
         )
         .navigationBarTitleDisplayMode(.inline)
         .scrollIndicators(.hidden)
@@ -122,6 +123,16 @@ struct SelectFolderView: View {
             onNoteCreated(note)
         } catch {
             print("Failed to create note: \(error)")
+        }
+    }
+
+    private func createNoteInRoot() {
+        guard let rootURL = fileStore.rootURL else { return }
+        do {
+            let note = try fileStore.createNote(in: rootURL)
+            onNoteCreated(note)
+        } catch {
+            print("Failed to create note in root: \(error)")
         }
     }
     

@@ -52,7 +52,7 @@ final class FileStore {
     
     /// Local documents directory
     private var documentsDirectory: URL {
-        fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
+        URL.documentsDirectory
     }
     
     /// iCloud ubiquity container (nil if not available)
@@ -254,7 +254,7 @@ final class FileStore {
             throw FileStoreError.rootNotAvailable
         }
         
-        let folderURL = rootURL.appendingPathComponent(name)
+        let folderURL = rootURL.appending(path: name)
         
         if fileManager.fileExists(atPath: folderURL.path) {
             throw FileStoreError.alreadyExists
@@ -272,19 +272,20 @@ final class FileStore {
         let baseName = filename ?? Note.defaultFilename(forFolder: folderURL.lastPathComponent)
         let finalName = nextAvailableFilename(base: baseName, in: folderURL)
         
-        let noteURL = folderURL.appendingPathComponent(finalName).appendingPathExtension("md")
+        let noteURL = folderURL.appending(path: finalName).appendingPathExtension("md")
         
         // Create empty file
         try "".write(to: noteURL, atomically: true, encoding: .utf8)
         
         let resourceValues = try? noteURL.resourceValues(forKeys: [.contentModificationDateKey, .creationDateKey])
         
+        let isOrphan = folderURL.standardizedFileURL.path == rootURL?.standardizedFileURL.path
         let note = Note(
             url: noteURL,
             content: "",
             modifiedDate: resourceValues?.contentModificationDate ?? Date(),
             createdDate: resourceValues?.creationDate ?? Date(),
-            isOrphan: false
+            isOrphan: isOrphan
         )
         
         reload()
@@ -296,7 +297,7 @@ final class FileStore {
         let mdExtension = "md"
         
         // Check if base name is available
-        let baseURL = folderURL.appendingPathComponent(base).appendingPathExtension(mdExtension)
+        let baseURL = folderURL.appending(path: base).appendingPathExtension(mdExtension)
         if !fileManager.fileExists(atPath: baseURL.path) {
             return base
         }
@@ -305,7 +306,7 @@ final class FileStore {
         var counter = 1
         while true {
             let numberedName = "\(base)-\(counter)"
-            let numberedURL = folderURL.appendingPathComponent(numberedName).appendingPathExtension(mdExtension)
+            let numberedURL = folderURL.appending(path: numberedName).appendingPathExtension(mdExtension)
             
             if !fileManager.fileExists(atPath: numberedURL.path) {
                 return numberedName
@@ -319,7 +320,7 @@ final class FileStore {
     /// Rename a note
     func renameNote(at url: URL, to newName: String) throws -> URL {
         let newURL = url.deletingLastPathComponent()
-            .appendingPathComponent(newName)
+            .appending(path: newName)
             .appendingPathExtension("md")
         
         if fileManager.fileExists(atPath: newURL.path) {
@@ -333,7 +334,7 @@ final class FileStore {
     
     /// Rename a folder
     func renameFolder(at url: URL, to newName: String) throws -> URL {
-        let newURL = url.deletingLastPathComponent().appendingPathComponent(newName)
+        let newURL = url.deletingLastPathComponent().appending(path: newName)
         
         if fileManager.fileExists(atPath: newURL.path) {
             throw FileStoreError.alreadyExists
@@ -349,12 +350,42 @@ final class FileStore {
     /// Move a note to a different folder
     func moveNote(at url: URL, to folderURL: URL) throws -> URL {
         let filename = url.lastPathComponent
-        let newURL = folderURL.appendingPathComponent(filename)
+        let newURL = folderURL.appending(path: filename)
         
         if fileManager.fileExists(atPath: newURL.path) {
             throw FileStoreError.alreadyExists
         }
         
+        try fileManager.moveItem(at: url, to: newURL)
+        reload()
+        return newURL
+    }
+
+    /// Move a folder to a different parent folder (or root when parent is nil).
+    func moveFolder(at url: URL, toParent parentURL: URL?) throws -> URL {
+        guard let rootURL else {
+            throw FileStoreError.rootNotAvailable
+        }
+
+        let destinationParent = parentURL ?? rootURL
+        guard isInCurrentRoot(url), isInCurrentRoot(destinationParent) else {
+            throw FileStoreError.invalidDestination
+        }
+
+        if destinationParent.standardizedFileURL.path == url.deletingLastPathComponent().standardizedFileURL.path {
+            return url
+        }
+
+        if destinationParent.standardizedFileURL.path == url.standardizedFileURL.path
+            || isDescendant(destinationParent, of: url) {
+            throw FileStoreError.invalidDestination
+        }
+
+        let newURL = destinationParent.appending(path: url.lastPathComponent)
+        if fileManager.fileExists(atPath: newURL.path) {
+            throw FileStoreError.alreadyExists
+        }
+
         try fileManager.moveItem(at: url, to: newURL)
         reload()
         return newURL
@@ -441,6 +472,19 @@ final class FileStore {
         }
         return find(in: folders)
     }
+
+    func isInCurrentRoot(_ url: URL) -> Bool {
+        guard let rootURL else { return false }
+        let rootPath = rootURL.standardizedFileURL.path
+        let targetPath = url.standardizedFileURL.path
+        return targetPath == rootPath || targetPath.hasPrefix(rootPath + "/")
+    }
+
+    func isDescendant(_ url: URL, of ancestor: URL) -> Bool {
+        let ancestorPath = ancestor.standardizedFileURL.path
+        let targetPath = url.standardizedFileURL.path
+        return targetPath.hasPrefix(ancestorPath + "/")
+    }
 }
 
 // MARK: - Errors
@@ -449,6 +493,7 @@ enum FileStoreError: LocalizedError {
     case rootNotAvailable
     case alreadyExists
     case notFound
+    case invalidDestination
     
     var errorDescription: String? {
         switch self {
@@ -458,6 +503,8 @@ enum FileStoreError: LocalizedError {
             return "An item with this name already exists"
         case .notFound:
             return "Item not found"
+        case .invalidDestination:
+            return "Destination is not allowed"
         }
     }
 }
