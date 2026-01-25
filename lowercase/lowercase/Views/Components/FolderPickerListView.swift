@@ -40,7 +40,7 @@ struct FolderPickerListView: View {
                     .buttonStyle(.plain)
 
                     if isCreatingFolder {
-                        FolderNameInputRow(
+                        FolderPickerNameInputRow(
                             name: $newFolderName,
                             gapWidth: gapWidth,
                             iconWidth: folderIconWidth,

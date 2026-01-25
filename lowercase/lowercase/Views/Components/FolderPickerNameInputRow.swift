@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct FolderNameInputRow: View {
+struct FolderPickerNameInputRow: View {
     @Binding var name: String
     var placeholder = "folder name"
     let gapWidth: CGFloat

@@ -72,7 +72,7 @@ When breaking views up prefer `View` structs over computed properties or functio
   - `SelectFolderView.swift` - select folder to put a new note in (modal)
     - `FolderPickerListView` - new folder button + list all folder picker tree views
     - `FolderPickerTreeView` - folder picker tree view with one depth of subfolders and notes (recursive)
-    - `FolderNameInputRow` - new folder name input (inline)
+- `FolderPickerNameInputRow` - new folder name input (inline)
     - `FolderPickerRow` - folder picker in a tree view (indent + SF symbol + folder name + disclosure chevron)
 
 - `~/Views/Onboarding/`
@@ -93,7 +93,7 @@ When breaking views up prefer `View` structs over computed properties or functio
   - `MoveToFolderView.swift` - select folder where you want to move folder / note (modal)
     - `FolderPickerListView` - new folder button + list all folder picker tree views
     - `FolderPickerTreeView` - folder picker tree view with one depth of subfolders and notes (recursive)
-    - `FolderNameInputRow` - new folder name input (inline)
+- `FolderPickerNameInputRow` - new folder name input (inline)
     - `FolderPickerRow` - folder picker in a tree view (indent + SF symbol + folder name + disclosure chevron)
   - `DeleteConfirmationView.swift` - confirm deletion of a folder or note (modal)
 
