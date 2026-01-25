@@ -23,11 +23,10 @@ struct FolderPickerListView: View {
                         onSelectRoot()
                     } label: {
                         HStack(spacing: gapWidth) {
-                            Image(systemName: "slash.circle.fill")
+                            Image(systemName: "slash.circle")
                                 .font(.title3)
                                 .foregroundStyle(.tint)
                                 .frame(width: folderIconWidth, height: folderIconWidth)
-                                .symbolRenderingMode(.hierarchical)
 
                             Text("root")
                                 .foregroundStyle(.tint)
@@ -55,11 +54,10 @@ struct FolderPickerListView: View {
                             isCreatingFolder = true
                         } label: {
                             HStack(spacing: gapWidth) {
-                                Image(systemName: "plus.circle.fill")
+                                Image(systemName: "plus.circle")
                                     .font(.title3)
                                     .foregroundStyle(.tint)
                                     .frame(width: folderIconWidth, height: folderIconWidth)
-                                    .symbolRenderingMode(.hierarchical)
                                 
                                 Text("new folder")
                                     .foregroundStyle(.tint)
