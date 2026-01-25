@@ -35,6 +35,11 @@ final class FileStore {
     /// Expanded folder state (keyed by folder URL path). Persisted per storage root.
     var expandedFolderPaths: Set<String> = []
     
+    /// Current sort option for folders and notes.
+    var sortOption: SortOption = .nameAsc {
+        didSet { applySort() }
+    }
+    
     private let expandedFolderPathsDefaultsPrefix = "expandedFolderPaths"
     private var expandedFolderPathsDefaultsKey: String {
         "\(expandedFolderPathsDefaultsPrefix).\(currentRoot.rawValue)"
@@ -134,6 +139,7 @@ final class FileStore {
         // Do filesystem traversal off the main thread; publish results on main.
         let fm = fileManager
         let expanded = expandedFolderPaths
+        let sortOption = sortOption
         ioQueue.async { [weak self] in
             let loadedFolders = FileStore.loadFolders(using: fm, at: rootURL, depth: 0, expandedFolderPaths: expanded)
             let loadedOrphans = FileStore.loadNotes(using: fm, at: rootURL, isOrphan: true)
@@ -141,6 +147,7 @@ final class FileStore {
                 guard let self else { return }
                 self.folders = loadedFolders
                 self.orphanNotes = loadedOrphans
+                self.applySort(sortOption)
             }
         }
     }
@@ -155,6 +162,7 @@ final class FileStore {
         
         folders = FileStore.loadFolders(using: fileManager, at: rootURL, depth: 0, expandedFolderPaths: expandedFolderPaths)
         orphanNotes = FileStore.loadNotes(using: fileManager, at: rootURL, isOrphan: true)
+        applySort()
     }
     
     /// Load folders at a given URL
@@ -417,22 +425,31 @@ final class FileStore {
     
     /// Sort folders and notes by given option
     func sort(by option: SortOption) {
-        folders = sortItems(folders, by: option)
+        folders = sortFoldersRecursively(folders, by: option)
         orphanNotes = sortNotes(orphanNotes, by: option)
-        
-        // Sort notes within each folder
-        for i in folders.indices {
-            folders[i].notes = sortNotes(folders[i].notes, by: option)
-            folders[i].subfolders = sortItems(folders[i].subfolders, by: option)
+    }
+    
+    private func applySort(_ option: SortOption? = nil) {
+        let option = option ?? sortOption
+        sort(by: option)
+    }
+    
+    private func sortFoldersRecursively(_ folders: [Folder], by option: SortOption) -> [Folder] {
+        let sortedFolders = sortItems(folders, by: option)
+        return sortedFolders.map { folder in
+            var updatedFolder = folder
+            updatedFolder.notes = sortNotes(folder.notes, by: option)
+            updatedFolder.subfolders = sortFoldersRecursively(folder.subfolders, by: option)
+            return updatedFolder
         }
     }
     
     private func sortItems(_ items: [Folder], by option: SortOption) -> [Folder] {
         switch option {
         case .nameAsc:
-            return items.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+            return items.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
         case .nameDesc:
-            return items.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedDescending }
+            return items.sorted { $0.name.localizedStandardCompare($1.name) == .orderedDescending }
         case .modifiedDesc:
             return items.sorted { $0.modifiedDate > $1.modifiedDate }
         case .modifiedAsc:
@@ -447,9 +464,9 @@ final class FileStore {
     private func sortNotes(_ notes: [Note], by option: SortOption) -> [Note] {
         switch option {
         case .nameAsc:
-            return notes.sorted { $0.filename.localizedCaseInsensitiveCompare($1.filename) == .orderedAscending }
+            return notes.sorted { $0.filename.localizedStandardCompare($1.filename) == .orderedAscending }
         case .nameDesc:
-            return notes.sorted { $0.filename.localizedCaseInsensitiveCompare($1.filename) == .orderedDescending }
+            return notes.sorted { $0.filename.localizedStandardCompare($1.filename) == .orderedDescending }
         case .modifiedDesc:
             return notes.sorted { $0.modifiedDate > $1.modifiedDate }
         case .modifiedAsc:

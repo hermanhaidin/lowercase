@@ -31,6 +31,8 @@ Running list of product + technical decisions. Keep entries short.
 - No-op moves are allowed; selecting current parent or root (when already there) just dismisses
 - FileStore is the only layer that mutates the filesystem
 - If a move happens while a note is open, the editor must update its URL and avoid recreating the old file
+- Prevent stale writes after move/rename to avoid recreating the old note
+- Moving or renaming items must not create duplicates; guard against stale writes
 
 ## Onboarding
 
@@ -73,6 +75,8 @@ Running list of product + technical decisions. Keep entries short.
 - Home bottom actions use `safeAreaBar(edge: .bottom)` to avoid SwiftUI top + bottom toolbar conflicts
 - Avoid mixing top and bottom toolbar items in the same view; use `safeAreaBar` for bottom controls
 - Custom app themes are out of scope for v0
+- Default sort is name a to z and persists across views and app relaunch
+- Name sorting uses natural order (finder-style numeric ordering)
 
 ## Toolbar animations
 

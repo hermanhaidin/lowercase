@@ -19,9 +19,14 @@ struct lowercaseApp: App {
             .environment(fileStore)
             .preferredColorScheme(appState.colorScheme)
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+                fileStore.sortOption = appState.sortOption
                 fileStore.reload()
             }
+            .onChange(of: appState.sortOption) { _, newValue in
+                fileStore.sortOption = newValue
+            }
             .onAppear {
+                fileStore.sortOption = appState.sortOption
                 fileStore.reload()
             }
         }

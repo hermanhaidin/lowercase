@@ -31,6 +31,7 @@ struct EditorView: View {
     
     // Auto-save debounce
     @State private var saveTask: Task<Void, Never>?
+    @State private var saveGeneration = 0
     
     // Prevent double-finalization (e.g. custom Back triggers dismiss, then onDisappear fires)
     @State private var didFinalizeExit = false
@@ -112,7 +113,7 @@ struct EditorView: View {
                 },
                 onMove: {
                     pendingMoveSourceURL = noteURL
-                    saveTask?.cancel()
+                    invalidatePendingSaves()
                     showingMoveSheet = true
                     showingQuickActions = false
                 },
@@ -196,10 +197,14 @@ struct EditorView: View {
         filename = noteURL.deletingPathExtension().lastPathComponent
     }
     
-    private func saveContent() {
+    private func saveContent(synchronously: Bool = false) {
         guard let url = currentNoteURL else { return }
-        // Avoid blocking the main thread (can manifest as keyboard/tap delays).
-        fileStore.writeContentAsync(content, to: url)
+        if synchronously {
+            try? fileStore.writeContent(content, to: url)
+        } else {
+            // Avoid blocking the main thread (can manifest as keyboard/tap delays).
+            fileStore.writeContentAsync(content, to: url)
+        }
     }
     
     private var currentNoteURL: URL? {
@@ -218,11 +223,15 @@ struct EditorView: View {
     
     private func scheduleAutoSave() {
         saveTask?.cancel()
+        let generation = saveGeneration
+        let targetURL = currentNoteURL?.standardizedFileURL
         saveTask = Task {
             try? await Task.sleep(for: .seconds(1))
             if !Task.isCancelled {
                 await MainActor.run {
-                    saveContent()
+                    guard generation == saveGeneration else { return }
+                    guard let targetURL, targetURL == currentNoteURL?.standardizedFileURL else { return }
+                    fileStore.writeContentAsync(content, to: targetURL)
                 }
             }
         }
@@ -235,7 +244,7 @@ struct EditorView: View {
         didFinalizeExit = true
         
         // Cancel pending save and flush final state synchronously.
-        saveTask?.cancel()
+        invalidatePendingSaves()
         
         if shouldAutoDelete {
             // Delete the note and do NOT recreate it by saving on disappear.
@@ -271,8 +280,10 @@ struct EditorView: View {
         guard !trimmed.isEmpty, trimmed != filename else { return }
         
         do {
-            // Save current content first
-            saveContent()
+            // Cancel pending async writes to avoid recreating the old filename.
+            invalidatePendingSaves()
+            // Save current content synchronously before moving the file.
+            saveContent(synchronously: true)
             // Rename the file
             let newURL = try fileStore.renameNote(at: noteURL, to: trimmed)
             noteURL = newURL
@@ -284,10 +295,15 @@ struct EditorView: View {
     }
     
     private func deleteNote() {
-        saveTask?.cancel()
+        invalidatePendingSaves()
         didFinalizeExit = true
         try? fileStore.deleteNote(at: currentNoteURL ?? noteURL)
         dismiss()
+    }
+
+    private func invalidatePendingSaves() {
+        saveGeneration &+= 1
+        saveTask?.cancel()
     }
 }
 

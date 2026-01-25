@@ -57,7 +57,7 @@ final class AppState {
         // Load persisted values or use defaults
         self.currentRoot = StorageRoot(rawValue: defaults.string(forKey: Keys.currentRoot) ?? "") ?? .local
         
-        self.sortOption = SortOption(rawValue: defaults.string(forKey: Keys.sortOption) ?? "") ?? .modifiedDesc
+        self.sortOption = SortOption(rawValue: defaults.string(forKey: Keys.sortOption) ?? "") ?? .nameAsc
         
         self.appearance = AppAppearance(rawValue: defaults.string(forKey: Keys.appearance) ?? "") ?? .system
         

@@ -267,7 +267,7 @@ struct HomeView: View {
             toggleAllFolders()
         } label: {
             Image(systemName: areAllFoldersExpanded ? "arrow.down.and.line.horizontal.and.arrow.up" : "arrow.up.and.down")
-                .font(.caption.bold())
+                .font(.subheadline)
         }
     }
     
@@ -299,7 +299,6 @@ struct HomeView: View {
 
     private func applySort(_ option: SortOption) {
         appState.sortOption = option
-        fileStore.sort(by: option)
     }
     
     private func selectLocalRoot() {

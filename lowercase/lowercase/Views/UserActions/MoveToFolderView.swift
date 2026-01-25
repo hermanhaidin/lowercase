@@ -218,7 +218,6 @@ struct MoveToFolderView: View {
     
     private func applySort(_ option: SortOption) {
         appState.sortOption = option
-        fileStore.sort(by: option)
     }
 }
 
