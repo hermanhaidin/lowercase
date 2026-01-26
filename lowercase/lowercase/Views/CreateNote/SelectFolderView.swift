@@ -66,12 +66,12 @@ struct SelectFolderView: View {
                             .foregroundStyle(.white)
                     }
                     .buttonStyle(.glassProminent)
-                    .glassEffectID("action", in: namespace)
+                    .glassEffectID("done", in: namespace)
                 }
             } else {
                 ToolbarItem {
                     Button("sort") { showingSortSheet = true }
-                        .glassEffectID("action", in: namespace)
+                        .glassEffectID("sort", in: namespace)
                 }
             }
         }

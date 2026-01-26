@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 struct HomeView: View {
     @Environment(FileStore.self) private var fileStore
@@ -18,12 +19,12 @@ struct HomeView: View {
     @State private var quickActionsTarget: QuickActionsTarget?
     @State private var pendingMoveTarget: MoveTarget?
     
-    // Context menu state
-    @State private var itemToRename: URL?
-    @State private var itemToMove: URL?
-    @State private var isRenamingFolder = false
-    @State private var newName = ""
-    @State private var showingRenameAlert = false
+    // Rename state
+    @State private var renameTarget: RenameTarget?
+    @State private var renameText = ""
+    @State private var showRenameDoneButton = false
+    @FocusState private var isRenameFocused: Bool
+    @State private var keyboardHeight: CGFloat = 0
     @State private var deleteTarget: QuickActionsTarget?
     @State private var pendingDeleteTarget: QuickActionsTarget?
     
@@ -67,61 +68,98 @@ struct HomeView: View {
     @ScaledMetric private var folderIconWidth = ViewTokens.folderRowIconSize
     @ScaledMetric private var noteIconWidth = ViewTokens.noteRowIconSize
     
+    @Namespace private var namespace
+    
     var body: some View {
-        HomeContentList(
-            folders: fileStore.folders,
-            orphanNotes: fileStore.orphanNotes,
-            folderGapWidth: folderGapWidth,
-            noteGapWidth: noteGapWidth,
-            chevronIconWidth: chevronIconWidth,
-            folderIconWidth: folderIconWidth,
-            noteIconWidth: noteIconWidth,
-            isExpanded: fileStore.isFolderExpanded,
-            onToggleExpanded: fileStore.toggleFolderExpansion,
-            onFolderLongPress: { showQuickActions(for: $0) },
-            onNoteLongPress: { showQuickActions(for: $0) }
-        )
-        .toolbar {
-            ToolbarItem(placement: .topBarLeading) { editButton }
-            ToolbarItem(placement: .automatic) { expandCollapseButton }
-            ToolbarSpacer(.fixed)
-            ToolbarItem(placement: .automatic) { sortButton }
-        }
-        .safeAreaBar(edge: .bottom) {
-            HStack {
-                storageSwitcher
-                    .glassEffect(.regular.interactive(), in: .capsule)
-                    .buttonStyle(.plain)
-                
-                Button {
-                    showingNewNoteSheet = true
-                } label: {
-                    Image(systemName: "plus")
-                        .font(.title3)
-                        .foregroundStyle(.white)
-                        .frame(width: 48, height: 48)
+        GeometryReader { proxy in
+            HomeContentList(
+                folders: fileStore.folders,
+                orphanNotes: fileStore.orphanNotes,
+                folderGapWidth: folderGapWidth,
+                noteGapWidth: noteGapWidth,
+                chevronIconWidth: chevronIconWidth,
+                folderIconWidth: folderIconWidth,
+                noteIconWidth: noteIconWidth,
+                isExpanded: fileStore.isFolderExpanded,
+                onToggleExpanded: fileStore.toggleFolderExpansion,
+                onFolderLongPress: { showQuickActions(for: $0) },
+                onNoteLongPress: { showQuickActions(for: $0) },
+                renameTarget: renameTarget,
+                renameText: $renameText,
+                isRenameFocused: $isRenameFocused,
+                onSubmitRename: submitRename,
+                allowLongPress: !isRenameFocused,
+                keyboardBottomPadding: isRenameFocused ? keyboardHeight + 16 : 0
+            )
+            .toolbar {
+            if showRenameDoneButton {
+                ToolbarItem {
+                    Button {
+                        submitRename()
+                    } label: {
+                        Text("done")
+                            .foregroundStyle(.white)
+                            .monospaced()
+                    }
+                    .buttonStyle(.glassProminent)
+                    .glassEffectID("done", in: namespace)
                 }
-                .glassEffect(.regular.tint(.blue).interactive(), in: .circle)
+            } else {
+                ToolbarItem(placement: .topBarLeading) {
+                    editButton
+                        .glassEffectID("edit", in: namespace)
+                }
+                ToolbarItem {
+                    expandCollapseButton
+                        .glassEffectID("expandCollapse", in: namespace)
+                }
+                ToolbarSpacer(.fixed)
+                ToolbarItem {
+                    sortButton
+                        .glassEffectID("sort", in: namespace)
+                }
             }
-        }
-        .ignoresSafeArea(.keyboard, edges: .bottom)
-        .sheet(isPresented: $showingNewNoteSheet) {
+            }
+            .safeAreaBar(edge: .bottom) {
+            if showRenameDoneButton {
+                EmptyView()
+            } else {
+                HStack {
+                    storageSwitcher
+                        .glassEffect(.regular.interactive(), in: .capsule)
+                        .buttonStyle(.plain)
+                        .glassEffectID("storageSwitcher", in: namespace)
+                    
+                    Button {
+                        showingNewNoteSheet = true
+                    } label: {
+                        Image(systemName: "plus")
+                            .font(.title3)
+                            .foregroundStyle(.white)
+                            .frame(width: 48, height: 48)
+                    }
+                    .glassEffect(.regular.tint(.accentColor).interactive(), in: .circle)
+                    .glassEffectID("addNote", in: namespace)
+                }
+            }
+            }
+            .sheet(isPresented: $showingNewNoteSheet) {
             NavigationStack {
                 SelectFolderView { note in
                     showingNewNoteSheet = false
                     navigationPath.append(AppRoute.editor(note))
                 }
             }
-        }
-        .sheet(isPresented: $showingSortSheet) {
+            }
+            .sheet(isPresented: $showingSortSheet) {
             SortByView(selectedOption: appState.sortOption) { option in
                 applySort(option)
                 showingSortSheet = false
             }
                 .presentationDetents([.medium])
                 .presentationDragIndicator(.visible)
-        }
-        .sheet(isPresented: $showingStorageSheet, onDismiss: handleStorageSheetDismiss) {
+            }
+            .sheet(isPresented: $showingStorageSheet, onDismiss: handleStorageSheetDismiss) {
             StorageSwitcherView(
                 selectedRoot: appState.currentRoot,
                 onSelectLocal: selectLocalRoot,
@@ -132,8 +170,8 @@ struct HomeView: View {
             )
             .presentationDetents([.medium])
             .presentationDragIndicator(.visible)
-        }
-        .sheet(item: $quickActionsTarget) { target in
+            }
+            .sheet(item: $quickActionsTarget) { target in
             QuickActionsView(
                 canMove: true,
                 onRename: { handleRename(for: target) },
@@ -142,11 +180,11 @@ struct HomeView: View {
             )
             .presentationDetents([.medium])
             .presentationDragIndicator(.visible)
-        }
-        .sheet(item: $moveTarget) { target in
+            }
+            .sheet(item: $moveTarget) { target in
             MoveToFolderView(item: target.item)
-        }
-        .sheet(item: $deleteTarget) { target in
+            }
+            .sheet(item: $deleteTarget) { target in
             DeleteConfirmationView(
                 name: target.name,
                 isFolder: target.kind == .folder,
@@ -165,20 +203,11 @@ struct HomeView: View {
             )
             .presentationDetents([.medium])
             .presentationDragIndicator(.visible)
-        }
-        .alert("Rename", isPresented: $showingRenameAlert) {
-            TextField("Name", text: $newName)
-            Button("Cancel", role: .cancel) {
-                itemToRename = nil
             }
-            Button("Rename") {
-                performRename()
-            }
-        }
-        .onAppear {
+            .onAppear {
             fileStore.reload()
-        }
-        .onChange(of: quickActionsTarget) { _, newValue in
+            }
+            .onChange(of: quickActionsTarget) { _, newValue in
             guard newValue == nil else { return }
             if let pendingMoveTarget {
                 moveTarget = pendingMoveTarget
@@ -188,28 +217,57 @@ struct HomeView: View {
                 deleteTarget = pendingDeleteTarget
                 self.pendingDeleteTarget = nil
             }
+            }
+            .onChange(of: isRenameFocused) { _, focused in
+            withAnimation {
+                showRenameDoneButton = focused
+            }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillChangeFrameNotification)) { notification in
+            guard let frame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else {
+                return
+            }
+            let height = max(0, frame.height - proxy.safeAreaInsets.bottom)
+            withAnimation {
+                keyboardHeight = height
+            }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
+            withAnimation {
+                keyboardHeight = 0
+            }
+            }
         }
     }
     
     // MARK: - Context Menu Actions
     
-    private func performRename() {
-        guard let url = itemToRename else { return }
-        let trimmed = newName.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return }
+    private func submitRename() {
+        guard let renameTarget else { return }
+        let trimmed = renameText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            dismissRename()
+            return
+        }
         
         do {
-            if isRenamingFolder {
+            switch renameTarget {
+            case .folder(let url):
                 _ = try fileStore.renameFolder(at: url, to: trimmed)
-            } else {
+            case .note(let url):
                 _ = try fileStore.renameNote(at: url, to: trimmed)
             }
         } catch {
             print("Rename failed: \(error)")
         }
         
-        itemToRename = nil
-        newName = ""
+        dismissRename()
+    }
+    
+    private func dismissRename() {
+        renameTarget = nil
+        renameText = ""
+        isRenameFocused = false
     }
     
     private func performDelete(for target: QuickActionsTarget) {
@@ -227,10 +285,14 @@ struct HomeView: View {
     // MARK: - Context Menu Builders
     
     private func handleRename(for target: QuickActionsTarget) {
-        itemToRename = target.url
-        isRenamingFolder = target.kind == .folder
-        newName = target.name
-        showingRenameAlert = true
+        switch target.kind {
+        case .folder:
+            renameTarget = .folder(url: target.url)
+        case .note:
+            renameTarget = .note(url: target.url)
+        }
+        renameText = target.name
+        isRenameFocused = true
         quickActionsTarget = nil
     }
     
@@ -366,48 +428,101 @@ private struct HomeContentList: View {
     let onToggleExpanded: (URL) -> Void
     let onFolderLongPress: (Folder) -> Void
     let onNoteLongPress: (Note) -> Void
+    let renameTarget: RenameTarget?
+    @Binding var renameText: String
+    @FocusState.Binding var isRenameFocused: Bool
+    let onSubmitRename: () -> Void
+    let allowLongPress: Bool
+    let keyboardBottomPadding: CGFloat
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                ForEach(folders) { folder in
-                    FolderTreeView(
-                        folder: folder,
-                        depth: 0,
-                        folderGapWidth: folderGapWidth,
-                        noteGapWidth: noteGapWidth,
-                        chevronIconWidth: chevronIconWidth,
-                        folderIconWidth: folderIconWidth,
-                        noteIconWidth: noteIconWidth,
-                        isExpanded: isExpanded,
-                        onToggleExpanded: onToggleExpanded,
-                        onFolderLongPress: onFolderLongPress,
-                        onNoteLongPress: onNoteLongPress
-                    )
-                }
-                
-                ForEach(orphanNotes) { note in
-                    NavigationLink(value: AppRoute.editor(note)) {
-                        NoteRow(
-                            note: note,
+        let renameTargetID = renameTarget?.id
+        let scrollAnchor: UnitPoint = keyboardBottomPadding > 0 ? .bottom : .center
+        
+        ScrollViewReader { proxy in
+            ScrollView {
+                VStack(spacing: 0) {
+                    ForEach(folders) { folder in
+                        FolderTreeView(
+                            folder: folder,
                             depth: 0,
-                            isOrphan: true,
-                            gapWidth: noteGapWidth,
+                            folderGapWidth: folderGapWidth,
+                            noteGapWidth: noteGapWidth,
                             chevronIconWidth: chevronIconWidth,
-                            noteIconWidth: noteIconWidth
+                            folderIconWidth: folderIconWidth,
+                            noteIconWidth: noteIconWidth,
+                            isExpanded: isExpanded,
+                            onToggleExpanded: onToggleExpanded,
+                            onFolderLongPress: onFolderLongPress,
+                            onNoteLongPress: onNoteLongPress,
+                            renameTarget: renameTarget,
+                            renameText: $renameText,
+                            isRenameFocused: $isRenameFocused,
+                            onSubmitRename: onSubmitRename,
+                            allowLongPress: allowLongPress
                         )
                     }
-                    .buttonStyle(.plain)
-                    .simultaneousGesture(
-                        LongPressGesture(minimumDuration: 0.4)
-                            .onEnded { _ in onNoteLongPress(note) }
-                    )
+                    
+                    ForEach(orphanNotes) { note in
+                        if isRenaming(note) {
+                            NoteNameInputRow(
+                                name: $renameText,
+                                depth: 0,
+                                isOrphan: true,
+                                gapWidth: noteGapWidth,
+                                chevronIconWidth: chevronIconWidth,
+                                noteIconWidth: noteIconWidth,
+                                onSubmit: onSubmitRename,
+                                isFocused: $isRenameFocused
+                            )
+                            .id(note.url)
+                        } else {
+                            let row = NavigationLink(value: AppRoute.editor(note)) {
+                                NoteRow(
+                                    note: note,
+                                    depth: 0,
+                                    isOrphan: true,
+                                    gapWidth: noteGapWidth,
+                                    chevronIconWidth: chevronIconWidth,
+                                    noteIconWidth: noteIconWidth
+                                )
+                            }
+                            .buttonStyle(.plain)
+                            
+                            if allowLongPress {
+                                row.simultaneousGesture(
+                                    LongPressGesture(minimumDuration: 0.4)
+                                        .onEnded { _ in onNoteLongPress(note) }
+                                )
+                            } else {
+                                row
+                            }
+                        }
+                    }
+                }
+                .padding(.bottom, keyboardBottomPadding)
+            }
+            .contentMargins(.horizontal, 16)
+            .scrollIndicators(.hidden)
+            .monospaced()
+            .onChange(of: renameTargetID) { _, newValue in
+                guard let newValue else { return }
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    proxy.scrollTo(newValue, anchor: scrollAnchor)
+                }
+            }
+            .onChange(of: isRenameFocused) { _, focused in
+                guard focused, let renameTargetID else { return }
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    proxy.scrollTo(renameTargetID, anchor: scrollAnchor)
                 }
             }
         }
-        .contentMargins(.horizontal, 16)
-        .scrollIndicators(.hidden)
-        .monospaced()
+    }
+    
+    private func isRenaming(_ note: Note) -> Bool {
+        guard case .note(let url) = renameTarget else { return false }
+        return url == note.url
     }
 }
 

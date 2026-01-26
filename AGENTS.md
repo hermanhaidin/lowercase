@@ -41,6 +41,10 @@ If a suggestion violates these rules, do not propose it.
 - no `AnyView` unless required
 - when hiding scroll view indicators, use the `scrollIndicators(.hidden)`
 
+## SwiftUI / UIKit Exception
+
+- Prefer SwiftUI APIs, but using UIKit keyboard notifications is allowed to obtain accurate keyboard height for scroll + padding behavior
+
 ## Xcode Project Invariants
 
 - the Xcode project must remain in the `lowercase/` folder

@@ -77,6 +77,8 @@ Running list of product + technical decisions. Keep entries short.
 - Custom app themes are out of scope for v0
 - Default sort is name a to z and persists across views and app relaunch
 - Name sorting uses natural order (finder-style numeric ordering)
+- Inline rename rows should remain visible above the keyboard; use scroll-to + extra bottom padding when focused
+- Do not use `ignoresSafeArea(.keyboard, edges: .bottom)` on inline rename screens
 
 ## Toolbar animations
 

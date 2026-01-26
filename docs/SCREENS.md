@@ -89,7 +89,6 @@ When breaking views up prefer `View` structs over computed properties or functio
     - `SortOptionButton` - sort option button (title + detail + checkmark if selected)
   - `QuickActionsView.swift` - list of quick actions, such as rename, move to, delete (modal)
     - `QuickActionButton` - quick action button
-  - `EditFileNameView.swift` - rename folder or note (modal)
   - `MoveToFolderView.swift` - select folder where you want to move folder / note (modal)
     - `FolderPickerListView` - new folder button + list all folder picker tree views
     - `FolderPickerTreeView` - folder picker tree view with one depth of subfolders and notes (recursive)
@@ -103,5 +102,7 @@ When breaking views up prefer `View` structs over computed properties or functio
     - `FolderListView` - list all folder tree views + orphan notes
     - `FolderTreeView` - folder tree view with one depth of subfolders and notes (recursive)
     - `FolderRow` - folder accordion row in a tree view (indent + accordion chevron + SF symbol + folder name)
+    - `FolderNameInputRow` - inline folder rename input row (home)
     - `NoteRow` - note row in a tree view (indent + SF symbol + filename)
+    - `NoteNameInputRow` - inline note rename input row (home)
   - `EditorView.swift` - edit a single note (pushed)

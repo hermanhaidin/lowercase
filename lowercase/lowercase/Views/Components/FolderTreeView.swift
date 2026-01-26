@@ -12,41 +12,83 @@ struct FolderTreeView: View {
     let onToggleExpanded: (URL) -> Void
     let onFolderLongPress: (Folder) -> Void
     let onNoteLongPress: (Note) -> Void
+    let renameTarget: RenameTarget?
+    @Binding var renameText: String
+    @FocusState.Binding var isRenameFocused: Bool
+    let onSubmitRename: () -> Void
+    let allowLongPress: Bool
     
     var body: some View {
         Group {
-            FolderRow(
-                folder: folder,
-                depth: depth,
-                gapWidth: folderGapWidth,
-                chevronIconWidth: chevronIconWidth,
-                folderIconWidth: folderIconWidth,
-                isExpanded: isExpanded(folder.url),
-                onToggleExpanded: { onToggleExpanded(folder.url) }
-            )
-            .simultaneousGesture(
-                LongPressGesture(minimumDuration: 0.4)
-                    .onEnded { _ in onFolderLongPress(folder) }
-            )
+            if isRenaming(folder) {
+                FolderNameInputRow(
+                    name: $renameText,
+                    depth: depth,
+                    gapWidth: folderGapWidth,
+                    chevronIconWidth: chevronIconWidth,
+                    folderIconWidth: folderIconWidth,
+                    onSubmit: onSubmitRename,
+                    isFocused: $isRenameFocused
+                )
+                .id(folder.url)
+            } else {
+                let row = FolderRow(
+                    folder: folder,
+                    depth: depth,
+                    gapWidth: folderGapWidth,
+                    chevronIconWidth: chevronIconWidth,
+                    folderIconWidth: folderIconWidth,
+                    isExpanded: isExpanded(folder.url),
+                    onToggleExpanded: { onToggleExpanded(folder.url) }
+                )
+                
+                if allowLongPress {
+                    row.simultaneousGesture(
+                        LongPressGesture(minimumDuration: 0.4)
+                            .onEnded { _ in onFolderLongPress(folder) }
+                    )
+                } else {
+                    row
+                }
+            }
             
             if isExpanded(folder.url) {
                 VStack(spacing: 0) {
                     ForEach(folder.notes) { note in
-                        NavigationLink(value: AppRoute.editor(note)) {
-                            NoteRow(
-                                note: note,
+                        if isRenaming(note) {
+                            NoteNameInputRow(
+                                name: $renameText,
                                 depth: depth + 1,
                                 isOrphan: false,
                                 gapWidth: noteGapWidth,
                                 chevronIconWidth: chevronIconWidth,
-                                noteIconWidth: noteIconWidth
+                                noteIconWidth: noteIconWidth,
+                                onSubmit: onSubmitRename,
+                                isFocused: $isRenameFocused
                             )
+                            .id(note.url)
+                        } else {
+                            let row = NavigationLink(value: AppRoute.editor(note)) {
+                                NoteRow(
+                                    note: note,
+                                    depth: depth + 1,
+                                    isOrphan: false,
+                                    gapWidth: noteGapWidth,
+                                    chevronIconWidth: chevronIconWidth,
+                                    noteIconWidth: noteIconWidth
+                                )
+                            }
+                            .buttonStyle(.plain)
+                            
+                            if allowLongPress {
+                                row.simultaneousGesture(
+                                    LongPressGesture(minimumDuration: 0.4)
+                                        .onEnded { _ in onNoteLongPress(note) }
+                                )
+                            } else {
+                                row
+                            }
                         }
-                        .buttonStyle(.plain)
-                        .simultaneousGesture(
-                            LongPressGesture(minimumDuration: 0.4)
-                                .onEnded { _ in onNoteLongPress(note) }
-                        )
                     }
                     
                     ForEach(folder.subfolders) { subfolder in
@@ -61,11 +103,26 @@ struct FolderTreeView: View {
                             isExpanded: isExpanded,
                             onToggleExpanded: onToggleExpanded,
                             onFolderLongPress: onFolderLongPress,
-                            onNoteLongPress: onNoteLongPress
+                            onNoteLongPress: onNoteLongPress,
+                            renameTarget: renameTarget,
+                            renameText: $renameText,
+                            isRenameFocused: $isRenameFocused,
+                            onSubmitRename: onSubmitRename,
+                            allowLongPress: allowLongPress
                         )
                     }
                 }
             }
         }
+    }
+    
+    private func isRenaming(_ folder: Folder) -> Bool {
+        guard case .folder(let url) = renameTarget else { return false }
+        return url == folder.url
+    }
+    
+    private func isRenaming(_ note: Note) -> Bool {
+        guard case .note(let url) = renameTarget else { return false }
+        return url == note.url
     }
 }
