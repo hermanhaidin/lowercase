@@ -33,6 +33,7 @@ Running list of product + technical decisions. Keep entries short.
 - If a move happens while a note is open, the editor must update its URL and avoid recreating the old file
 - Prevent stale writes after move/rename to avoid recreating the old note
 - Moving or renaming items must not create duplicates; guard against stale writes
+- Same-name renames are no-ops; avoid filesystem moves or error logs
 
 ## Onboarding
 

@@ -53,7 +53,7 @@ struct FolderTreeView: View {
             }
             
             if isExpanded(folder.url) {
-                VStack(spacing: 0) {
+                LazyVStack(spacing: 0) {
                     ForEach(folder.notes) { note in
                         if isRenaming(note) {
                             NoteNameInputRow(

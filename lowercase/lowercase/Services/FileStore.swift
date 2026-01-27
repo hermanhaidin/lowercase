@@ -327,6 +327,10 @@ final class FileStore {
     
     /// Rename a note
     func renameNote(at url: URL, to newName: String) throws -> URL {
+        let currentName = url.deletingPathExtension().lastPathComponent
+        if newName == currentName {
+            return url
+        }
         let newURL = url.deletingLastPathComponent()
             .appending(path: newName)
             .appendingPathExtension("md")
@@ -342,6 +346,10 @@ final class FileStore {
     
     /// Rename a folder
     func renameFolder(at url: URL, to newName: String) throws -> URL {
+        let currentName = url.lastPathComponent
+        if newName == currentName {
+            return url
+        }
         let newURL = url.deletingLastPathComponent().appending(path: newName)
         
         if fileManager.fileExists(atPath: newURL.path) {

@@ -33,7 +33,6 @@ struct NoteNameInputRow: View {
                 .textInputAutocapitalization(.never)
                 .focused($isFocused)
                 .onSubmit { onSubmit() }
-                .task { isFocused = true }
         }
         .padding(.vertical, 10)
         .padding(.horizontal, 8)

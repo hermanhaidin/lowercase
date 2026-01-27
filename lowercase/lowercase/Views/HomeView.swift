@@ -92,56 +92,55 @@ struct HomeView: View {
                 keyboardBottomPadding: isRenameFocused ? keyboardHeight + 16 : 0
             )
             .toolbar {
-            if showRenameDoneButton {
-                ToolbarItem {
-                    Button {
-                        submitRename()
-                    } label: {
-                        Text("done")
-                            .foregroundStyle(.white)
-                            .monospaced()
+                if showRenameDoneButton {
+                    ToolbarItem {
+                        Button(role: .confirm) {
+                            submitRename()
+                        } label: {
+                            Text("done")
+                                .foregroundStyle(.white)
+                                .monospaced()
+                        }
+                        .glassEffectID("done", in: namespace)
                     }
-                    .buttonStyle(.glassProminent)
-                    .glassEffectID("done", in: namespace)
+                } else {
+                    ToolbarItem(placement: .topBarLeading) {
+                        editButton
+                            .glassEffectID("edit", in: namespace)
+                    }
+                    ToolbarItem {
+                        expandCollapseButton
+                            .glassEffectID("expandCollapse", in: namespace)
+                    }
+                    ToolbarSpacer(.fixed)
+                    ToolbarItem {
+                        sortButton
+                            .glassEffectID("sort", in: namespace)
+                    }
                 }
-            } else {
-                ToolbarItem(placement: .topBarLeading) {
-                    editButton
-                        .glassEffectID("edit", in: namespace)
-                }
-                ToolbarItem {
-                    expandCollapseButton
-                        .glassEffectID("expandCollapse", in: namespace)
-                }
-                ToolbarSpacer(.fixed)
-                ToolbarItem {
-                    sortButton
-                        .glassEffectID("sort", in: namespace)
-                }
-            }
             }
             .safeAreaBar(edge: .bottom) {
-            if showRenameDoneButton {
-                EmptyView()
-            } else {
-                HStack {
-                    storageSwitcher
-                        .glassEffect(.regular.interactive(), in: .capsule)
-                        .buttonStyle(.plain)
-                        .glassEffectID("storageSwitcher", in: namespace)
-                    
-                    Button {
-                        showingNewNoteSheet = true
-                    } label: {
-                        Image(systemName: "plus")
-                            .font(.title3)
-                            .foregroundStyle(.white)
-                            .frame(width: 48, height: 48)
+                if showRenameDoneButton {
+                    EmptyView()
+                } else {
+                    HStack {
+                        storageSwitcher
+                            .glassEffect(.regular.interactive(), in: .capsule)
+                            .buttonStyle(.plain)
+                            .glassEffectID("storageSwitcher", in: namespace)
+                        
+                        Button {
+                            showingNewNoteSheet = true
+                        } label: {
+                            Image(systemName: "plus")
+                                .font(.title3)
+                                .foregroundStyle(.white)
+                                .frame(width: 48, height: 48)
+                        }
+                        .glassEffect(.regular.tint(.accentColor).interactive(), in: .circle)
+                        .glassEffectID("addNote", in: namespace)
                     }
-                    .glassEffect(.regular.tint(.accentColor).interactive(), in: .circle)
-                    .glassEffectID("addNote", in: namespace)
                 }
-            }
             }
             .sheet(isPresented: $showingNewNoteSheet) {
             NavigationStack {
@@ -205,37 +204,37 @@ struct HomeView: View {
             .presentationDragIndicator(.visible)
             }
             .onAppear {
-            fileStore.reload()
+                fileStore.reload()
             }
             .onChange(of: quickActionsTarget) { _, newValue in
-            guard newValue == nil else { return }
-            if let pendingMoveTarget {
-                moveTarget = pendingMoveTarget
-                self.pendingMoveTarget = nil
-            }
-            if let pendingDeleteTarget {
-                deleteTarget = pendingDeleteTarget
-                self.pendingDeleteTarget = nil
-            }
+                guard newValue == nil else { return }
+                if let pendingMoveTarget {
+                    moveTarget = pendingMoveTarget
+                    self.pendingMoveTarget = nil
+                }
+                if let pendingDeleteTarget {
+                    deleteTarget = pendingDeleteTarget
+                    self.pendingDeleteTarget = nil
+                }
             }
             .onChange(of: isRenameFocused) { _, focused in
-            withAnimation {
-                showRenameDoneButton = focused
-            }
+                withAnimation {
+                    showRenameDoneButton = focused
+                }
             }
             .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillChangeFrameNotification)) { notification in
             guard let frame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else {
                 return
             }
             let height = max(0, frame.height - proxy.safeAreaInsets.bottom)
-            withAnimation {
-                keyboardHeight = height
-            }
+                withAnimation {
+                    keyboardHeight = height
+                }
             }
             .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
-            withAnimation {
-                keyboardHeight = 0
-            }
+                withAnimation {
+                    keyboardHeight = 0
+                }
             }
         }
     }
@@ -246,6 +245,10 @@ struct HomeView: View {
         guard let renameTarget else { return }
         let trimmed = renameText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
+            dismissRename()
+            return
+        }
+        guard trimmed != currentName(for: renameTarget) else {
             dismissRename()
             return
         }
@@ -268,6 +271,15 @@ struct HomeView: View {
         renameTarget = nil
         renameText = ""
         isRenameFocused = false
+    }
+
+    private func currentName(for target: RenameTarget) -> String {
+        switch target {
+        case .folder(let url):
+            return url.lastPathComponent
+        case .note(let url):
+            return url.deletingPathExtension().lastPathComponent
+        }
     }
     
     private func performDelete(for target: QuickActionsTarget) {
@@ -292,8 +304,11 @@ struct HomeView: View {
             renameTarget = .note(url: target.url)
         }
         renameText = target.name
-        isRenameFocused = true
         quickActionsTarget = nil
+        Task {
+            await Task.yield()
+            isRenameFocused = true
+        }
     }
     
     private func handleMove(for target: QuickActionsTarget) {
@@ -441,7 +456,7 @@ private struct HomeContentList: View {
         
         ScrollViewReader { proxy in
             ScrollView {
-                VStack(spacing: 0) {
+                LazyVStack(spacing: 0) {
                     ForEach(folders) { folder in
                         FolderTreeView(
                             folder: folder,
@@ -503,18 +518,14 @@ private struct HomeContentList: View {
                 .padding(.bottom, keyboardBottomPadding)
             }
             .contentMargins(.horizontal, 16)
+            .scrollBounceBehavior(.basedOnSize)
             .scrollIndicators(.hidden)
             .monospaced()
             .onChange(of: renameTargetID) { _, newValue in
                 guard let newValue else { return }
-                withAnimation(.easeInOut(duration: 0.2)) {
+                Task {
+                    await Task.yield()
                     proxy.scrollTo(newValue, anchor: scrollAnchor)
-                }
-            }
-            .onChange(of: isRenameFocused) { _, focused in
-                guard focused, let renameTargetID else { return }
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    proxy.scrollTo(renameTargetID, anchor: scrollAnchor)
                 }
             }
         }
