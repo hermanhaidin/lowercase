@@ -89,7 +89,7 @@ struct HomeView: View {
                 isRenameFocused: $isRenameFocused,
                 onSubmitRename: submitRename,
                 allowLongPress: !isRenameFocused,
-                keyboardBottomPadding: isRenameFocused ? keyboardHeight + 16 : 0
+                keyboardBottomPadding: isRenameFocused ? keyboardHeight + 44 : 0
             )
             .toolbar {
                 if showRenameDoneButton {
@@ -142,6 +142,7 @@ struct HomeView: View {
                     }
                 }
             }
+            .scrollEdgeEffectHidden(showRenameDoneButton ? true : false, for: .bottom)
             .sheet(isPresented: $showingNewNoteSheet) {
             NavigationStack {
                 SelectFolderView { note in
