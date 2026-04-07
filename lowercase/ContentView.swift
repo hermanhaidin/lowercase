@@ -1,18 +1,12 @@
-//
-//  ContentView.swift
-//  lowercase
-//
-//  Created by Herman Haidin on 05.04.2026.
-//
-
 import SwiftUI
 
 struct ContentView: View {
     var body: some View {
-        VStack {
-            Text("Hello, world!")
-        }
-        .padding()
+        Text("lowercase")
+            .font(.geistPixel)
+            .foregroundStyle(Design.Colors.label)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Design.Colors.background)
     }
 }
 
