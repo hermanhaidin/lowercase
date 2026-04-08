@@ -26,7 +26,7 @@
 - For bottom bars, use `safeAreaBar(edge: .bottom)` instead of `ToolbarItem(placement: .bottomBar)`
 - For keyboard accessories, use `safeAreaInset(edge: .bottom)` instead of `ToolbarItem(placement: .keyboard)` — the latter offers no control over spacing, padding, or sizing
 - When a `TextField` needs programmatic focus inside a `ToolbarItem`, use a `UIViewRepresentable` wrapping `UITextField` with `becomeFirstResponder()` — `@FocusState` is broken in toolbar placements (unfixed through iOS 26)
-- `confirmationDialog()` attached to trigger source (Liquid Glass animation)
+- All confirmations use sheets, not `confirmationDialog()`
 
 ## File System
 - Treat file `URL` as the source of truth for file identity — models hold `URL`, not `String` paths

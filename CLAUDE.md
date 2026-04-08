@@ -13,6 +13,7 @@ For people who think in files and folders — notes stored as plain `.md` files,
 ## Key conventions
 
 - See `.claude/rules/app-overview.md` for product philosophy and scope
+- See `.claude/rules/user-flow.md` for screens, navigation, and interactions
 - See `.claude/rules/markdown-formatting.md` for editor syntax and shortcuts
 - See `.claude/rules/coding-conventions.md` for coding rules
 - Use `Design.*` constants for all colors, spacing, sizing
