@@ -8,5 +8,17 @@
 	</array>
 	<key>UIFileSharingEnabled</key>
 	<true/>
+	<key>NSUbiquitousContainers</key>
+	<dict>
+		<key>iCloud.com.hermanhaidin.lowercase</key>
+		<dict>
+			<key>NSUbiquitousContainerIsDocumentScopePublic</key>
+			<true/>
+			<key>NSUbiquitousContainerSupportedFolderLevels</key>
+			<string>Any</string>
+			<key>NSUbiquitousContainerName</key>
+			<string>lowercase</string>
+		</dict>
+	</dict>
 </dict>
 </plist>
