@@ -5,6 +5,7 @@ enum Icon: String {
     case arrowLeft = "arrow-left"
     case chevronRight = "chevron-right"
     case chevronDown = "chevron-down"
+    case chevronDownUp = "chevron-down-up"
     case chevronUpDown = "chevron-up-down"
 
     // Files & Folders

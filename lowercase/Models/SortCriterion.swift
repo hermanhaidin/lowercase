@@ -22,4 +22,12 @@ enum SortCriterion: String, CaseIterable, Identifiable {
         case .created: false
         }
     }
+
+    func directionLabel(ascending: Bool) -> String {
+        switch self {
+        case .name: ascending ? "a to z" : "z to a"
+        case .modified: ascending ? "old to new" : "new to old"
+        case .created: ascending ? "old to new" : "new to old"
+        }
+    }
 }

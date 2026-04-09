@@ -20,6 +20,13 @@ enum StorageRoot: String, CaseIterable, Identifiable {
         }
     }
 
+    var shortName: String {
+        switch self {
+        case .local: "Local"
+        case .iCloud: "iCloud"
+        }
+    }
+
     var isAvailable: Bool {
         switch self {
         case .local: true

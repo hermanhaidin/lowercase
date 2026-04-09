@@ -1,6 +1,6 @@
 import Foundation
 
-struct FlatTreeRow: Identifiable {
+struct FlatTreeRow: Identifiable, Equatable {
     let id: URL
     let name: String
     let isFolder: Bool
