@@ -1,15 +1,18 @@
 import SwiftUI
 
 struct ContentView: View {
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
+
     var body: some View {
-        Text("lowercase")
-            .font(.geistPixel)
-            .foregroundStyle(Design.Colors.label)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Design.Colors.background)
+        if hasCompletedOnboarding {
+            HomeView()
+        } else {
+            OnboardingFlow()
+        }
     }
 }
 
 #Preview {
     ContentView()
+        .environment(FileStore())
 }

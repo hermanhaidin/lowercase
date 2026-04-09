@@ -26,6 +26,7 @@
 - For bottom bars, use `safeAreaBar(edge: .bottom)` instead of `ToolbarItem(placement: .bottomBar)`
 - For keyboard accessories, use `safeAreaInset(edge: .bottom)` instead of `ToolbarItem(placement: .keyboard)` — the latter offers no control over spacing, padding, or sizing
 - When a `TextField` needs programmatic focus inside a `ToolbarItem`, use a `UIViewRepresentable` wrapping `UITextField` with `becomeFirstResponder()` — `@FocusState` is broken in toolbar placements (unfixed through iOS 26)
+- Custom back button icon is set globally via `UINavigationBar.appearance().backIndicatorImage` in the App `init()` — never hide the system back button to replace it with a custom one, as this breaks the native swipe-back gesture and Liquid Glass styling
 - All confirmations use sheets, not `confirmationDialog()`
 
 ## File System

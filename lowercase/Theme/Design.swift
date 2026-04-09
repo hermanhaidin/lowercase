@@ -27,6 +27,7 @@ enum Design {
         static let contentMargin: Double = 20
         static let buttonMargin: Double = 36
         static let labelGap: Double = 12
+        static let sectionGap: Double = 12
         static let treeIndent: Double = 16
         static let iconGap: Double = 8
     }
@@ -34,6 +35,8 @@ enum Design {
     // MARK: - Sizing
     enum Sizing {
         static let minRowHeight: Double = 44
+        static let minSectionHeight: Double = 52
+        static let sectionCornerRadius: Double = 26
         static let iconSize: Double = 16
         static let toolbarItemSize: Double = 44
     }
