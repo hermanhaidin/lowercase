@@ -69,4 +69,5 @@
 - If a move happens while note is open in editor, editor updates its URL silently
 - Root directories are created lazily — only when first folder or note is added
 - Slashes in new folder names create nested folders (e.g. `daily/work` creates `work` inside `daily`)
+- If today's daily note already exists in a "daily" folder, creating a new note there opens the existing note instead
 - Select-folder and move-to sheets share the same destination picker pattern

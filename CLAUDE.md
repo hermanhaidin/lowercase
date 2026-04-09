@@ -16,6 +16,7 @@ For people who think in files and folders — notes stored as plain `.md` files,
 - See `.claude/rules/user-flow.md` for screens, navigation, and interactions
 - See `.claude/rules/markdown-formatting.md` for editor syntax and shortcuts
 - See `.claude/rules/coding-conventions.md` for coding rules
+- See `.claude/rules/architecture.md` for models, services, and data flow
 - Use `Design.*` constants for all colors, spacing, sizing
 - Use `Font.geistPixel` for all text
 - Use `Icon.*` enum for all icons
