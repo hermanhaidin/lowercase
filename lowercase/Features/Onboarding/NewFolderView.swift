@@ -26,7 +26,7 @@ struct NewFolderView: View {
         .background(Design.Colors.background)
         .toolbarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .principal) {
+            ToolbarItem(placement: .title) {
                 Text("New folder")
                     .font(.geistPixel)
                     .foregroundStyle(Design.Colors.secondaryLabel)

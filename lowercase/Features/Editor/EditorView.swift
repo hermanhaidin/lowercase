@@ -12,7 +12,7 @@ struct EditorView: View {
             .background(Design.Colors.background)
             .toolbarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .principal) {
+                ToolbarItem(placement: .title) {
                     Text(fileName)
                         .font(.geistPixel)
                         .foregroundStyle(Design.Colors.label)
