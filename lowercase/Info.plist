@@ -10,7 +10,7 @@
 	<true/>
 	<key>NSUbiquitousContainers</key>
 	<dict>
-		<key>iCloud.com.hermanhaidin.lowercase</key>
+		<key>iCloud.com.hermanhaidin.lowercase.dev</key>
 		<dict>
 			<key>NSUbiquitousContainerIsDocumentScopePublic</key>
 			<true/>

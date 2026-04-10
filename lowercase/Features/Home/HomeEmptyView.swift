@@ -7,12 +7,11 @@ struct HomeEmptyView: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: Design.Sizing.iconSize, height: Design.Sizing.iconSize)
-                .foregroundStyle(Design.Colors.label)
+                .foregroundStyle(Design.Colors.secondaryAccent)
 
             Text("No notes yet...")
                 .font(.geistPixel)
                 .foregroundStyle(Design.Colors.label)
-                .tracking(1)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }

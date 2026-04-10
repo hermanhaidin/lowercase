@@ -37,6 +37,9 @@
 - When writing data, use `write(to:options:)` with `[.atomic, .completeFileProtection]`
 - When deleting, prefer `trashItem(at:resultingItemURL:)` over `removeItem(at:)` for user-initiated deletes
 
+## Gestures
+- `.onLongPressGesture` on a `Button` is swallowed by the button's tap recognizer — use `.simultaneousGesture(LongPressGesture().onEnded { })` instead
+
 ## Swift Style
 - Prefer `if let value {` shorthand
 - Omit return for single expression functions

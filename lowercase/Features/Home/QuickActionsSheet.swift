@@ -25,7 +25,8 @@ struct QuickActionsSheet: View {
 private struct ActionRow: View {
     let icon: Icon
     let label: String
-    var color: Color = Design.Colors.label
+    var iconColor: Color = Design.Colors.secondaryAccent
+    var labelColor: Color = Design.Colors.label
     var action: () -> Void
 
     var body: some View {
@@ -35,17 +36,17 @@ private struct ActionRow: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: Design.Sizing.iconSize, height: Design.Sizing.iconSize)
-                    .foregroundStyle(color)
+                    .foregroundStyle(iconColor)
 
                 Text(label)
                     .font(.geistPixel)
-                    .foregroundStyle(color)
+                    .foregroundStyle(labelColor)
 
                 Spacer()
             }
             .frame(minHeight: Design.Sizing.minSectionHeight)
             .padding(.horizontal)
-            .contentShape(Rectangle())
+            .contentShape(.rect)
         }
         .buttonStyle(.plain)
         .accessibilityLabel(label)
@@ -73,7 +74,7 @@ private extension QuickActionsSheet {
 
     var deleteSection: some View {
         SectionCard {
-            ActionRow(icon: .trash, label: "Delete", color: Design.Colors.accent) { dismiss() }
+            ActionRow(icon: .trash, label: "Delete", iconColor: Design.Colors.accent, labelColor: Design.Colors.accent) { dismiss() }
         }
     }
 

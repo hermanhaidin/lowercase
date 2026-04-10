@@ -2,7 +2,6 @@ import SwiftUI
 
 struct HomeBottomBar: View {
     let allExpanded: Bool
-    let isEmpty: Bool
     var onToggleExpansion: () -> Void
     var onSort: () -> Void
     var onAdd: () -> Void
@@ -19,7 +18,7 @@ struct HomeBottomBar: View {
 
             addNoteButton
         }
-        .padding(.horizontal, 16)
+        .padding(.horizontal, Design.Spacing.buttonMargin)
     }
 }
 
@@ -27,20 +26,23 @@ struct HomeBottomBar: View {
 
 private struct ExpandCollapseButton: View {
     let allExpanded: Bool
-    let isEmpty: Bool
     var action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            (allExpanded ? Icon.chevronDownUp : Icon.arrowUpDown).image
-                .resizable()
-                .scaledToFit()
-                .frame(width: Design.Sizing.iconSize, height: Design.Sizing.iconSize)
+            Label {
+                Text(allExpanded ? "Collapse all folders" : "Expand all folders")
+            } icon: {
+                (allExpanded ? Icon.chevronDownUp : Icon.arrowUpDown).image
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: Design.Sizing.iconSize, height: Design.Sizing.iconSize)
+                    .foregroundStyle(Design.Colors.label)
+            }
+            .labelStyle(.iconOnly)
         }
-        .buttonStyle(.glass)
         .frame(width: Design.Sizing.toolbarItemSize, height: Design.Sizing.toolbarItemSize)
-        .disabled(isEmpty)
-        .accessibilityLabel(allExpanded ? "Collapse all folders" : "Expand all folders")
+        .glassEffect(.regular.interactive(), in: .circle)
     }
 }
 
@@ -50,7 +52,10 @@ private struct SortButton: View {
     var body: some View {
         Button("Sort", action: action)
             .font(.geistPixel)
-            .buttonStyle(.glass)
+            .foregroundStyle(Design.Colors.label)
+            .frame(height: Design.Sizing.toolbarItemSize)
+            .padding(.horizontal, Design.Spacing.labelGap)
+            .glassEffect(.regular.interactive(), in: .capsule)
             .accessibilityLabel("Sort notes")
     }
 }
@@ -60,15 +65,19 @@ private struct AddNoteButton: View {
 
     var body: some View {
         Button(action: action) {
-            Icon.plus.image
-                .resizable()
-                .scaledToFit()
-                .frame(width: Design.Sizing.iconSize, height: Design.Sizing.iconSize)
+            Label {
+                Text("Add note")
+            } icon: {
+                Icon.plus.image
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: Design.Sizing.iconSize, height: Design.Sizing.iconSize)
+                    .foregroundStyle(Design.Colors.label)
+            }
+            .labelStyle(.iconOnly)
         }
-        .buttonStyle(.glassProminent)
         .frame(width: Design.Sizing.toolbarItemSize, height: Design.Sizing.toolbarItemSize)
-        .tint(Design.Colors.glassTint)
-        .accessibilityLabel("Add note")
+        .glassEffect(.regular.tint(Design.Colors.glassTint).interactive(), in: .circle)
     }
 }
 
@@ -76,7 +85,7 @@ private struct AddNoteButton: View {
 
 private extension HomeBottomBar {
     var expandCollapseButton: some View {
-        ExpandCollapseButton(allExpanded: allExpanded, isEmpty: isEmpty, action: onToggleExpansion)
+        ExpandCollapseButton(allExpanded: allExpanded, action: onToggleExpansion)
     }
 
     var sortButton: some View {
@@ -93,7 +102,6 @@ private extension HomeBottomBar {
         Spacer()
         HomeBottomBar(
             allExpanded: false,
-            isEmpty: false,
             onToggleExpansion: {},
             onSort: {},
             onAdd: {}

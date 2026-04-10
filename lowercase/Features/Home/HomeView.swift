@@ -29,7 +29,6 @@ struct HomeView: View {
             .safeAreaBar(edge: .bottom) {
                 HomeBottomBar(
                     allExpanded: fileStore.allExpanded,
-                    isEmpty: fileStore.isEmpty,
                     onToggleExpansion: toggleExpansion,
                     onSort: { showSortSheet = true },
                     onAdd: addNote
@@ -37,18 +36,21 @@ struct HomeView: View {
             }
             .sheet(isPresented: $showStorageSwitcher) {
                 StorageSwitcherSheet()
-                    .presentationDetents([.height(160)])
+                    .presentationDetents([.fraction(0.33)])
                     .presentationBackground(Design.Colors.background)
+                    .presentationDragIndicator(.visible)
             }
             .sheet(isPresented: $showSortSheet) {
                 SortSheet()
                     .presentationDetents([.medium])
                     .presentationBackground(Design.Colors.background)
+                    .presentationDragIndicator(.visible)
             }
             .sheet(item: $quickActionTarget) { row in
                 QuickActionsSheet(row: row)
-                    .presentationDetents([.medium])
+                    .presentationDetents([.fraction(0.33)])
                     .presentationBackground(Design.Colors.background)
+                    .presentationDragIndicator(.visible)
             }
             .navigationDestination(for: HomeDestination.self) { destination in
                 switch destination {
@@ -71,17 +73,18 @@ private struct StorageSwitcherButton: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 6) {
+            HStack {
                 Text(rootName)
                     .font(.geistPixel)
+                    .foregroundStyle(Design.Colors.label)
 
                 Icon.chevronUpDown.image
                     .resizable()
                     .scaledToFit()
                     .frame(width: Design.Sizing.iconSize, height: Design.Sizing.iconSize)
+                    .foregroundStyle(Design.Colors.tertiaryLabel)
             }
         }
-        .buttonStyle(.glass)
         .accessibilityLabel("Switch storage, currently \(rootName)")
     }
 }

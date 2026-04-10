@@ -25,7 +25,7 @@ struct TreeRowView: View {
         .buttonStyle(.plain)
         .accessibilityLabel(accessibilityLabel)
         .accessibilityHint(accessibilityHint)
-        .onLongPressGesture { onLongPress() }
+        .simultaneousGesture(LongPressGesture().onEnded { _ in onLongPress() })
     }
 }
 

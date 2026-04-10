@@ -42,12 +42,12 @@ private struct SortRow: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: Design.Sizing.iconSize, height: Design.Sizing.iconSize)
-                        .foregroundStyle(Design.Colors.label)
+                        .foregroundStyle(Design.Colors.accent)
                 }
             }
             .frame(minHeight: Design.Sizing.minSectionHeight)
             .padding(.horizontal)
-            .contentShape(Rectangle())
+            .contentShape(.rect)
         }
         .buttonStyle(.plain)
         .accessibilityLabel("\(criterion.displayName) \(criterion.directionLabel(ascending: ascending))\(isActive ? ", selected" : "")")

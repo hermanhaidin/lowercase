@@ -69,7 +69,13 @@ final class FileStore {
         }
 
         ensureDirectoryExists(at: root)
-        rootChildren = try await scanDirectory(at: root)
+
+        do {
+            rootChildren = try await scanDirectory(at: root)
+        } catch {
+            rootChildren = []
+            throw error
+        }
     }
 
     private func scanDirectory(at url: URL) async throws -> [FileNode] {
@@ -348,6 +354,7 @@ final class FileStore {
     func switchRoot(to root: StorageRoot) async throws {
         activeRoot = root
         expandedFolders.removeAll()
+        rootChildren = []
 
         if root == .iCloud {
             iCloudMonitor.startMonitoring()
