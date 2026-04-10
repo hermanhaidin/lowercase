@@ -28,6 +28,7 @@
 - When a `TextField` needs programmatic focus inside a `ToolbarItem`, use a `UIViewRepresentable` wrapping `UITextField` with `becomeFirstResponder()` — `@FocusState` is broken in toolbar placements (unfixed through iOS 26)
 - Custom back button icon is set globally via `UINavigationBar.appearance().backIndicatorImage` in the App `init()` — never hide the system back button to replace it with a custom one, as this breaks the native swipe-back gesture and Liquid Glass styling
 - For custom inline title text, use `ToolbarItem(placement: .title)` paired with `.toolbarTitleDisplayMode(.inline)`
+- Views with keyboards must use `.background(Design.Colors.background.ignoresSafeArea())` — the shorthand `ShapeStyle` variant extends the background behind the keyboard without disrupting `safeAreaBar` layout, preventing the black window background from showing through the keyboard's rounded corners
 - All confirmations use sheets, not `confirmationDialog()`
 
 ## File System

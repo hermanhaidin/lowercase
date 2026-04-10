@@ -23,7 +23,7 @@ struct NewFolderView: View {
         }
         .scrollDismissesKeyboard(.interactively)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Design.Colors.background)
+        .background(Design.Colors.background.ignoresSafeArea())
         .toolbarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .title) {
