@@ -5,11 +5,13 @@ final class FileStore {
 
     // MARK: - State
 
-    var activeRoot: StorageRoot = .local
+    var activeRoot: StorageRoot
     private(set) var rootChildren: [FileNode] = []
     var sortOrder = SortOrder()
     var expandedFolders: Set<URL> = []
     var currentError: FileError?
+
+    private static let activeRootKey = "activeRoot"
 
     // MARK: - Derived
 
@@ -33,8 +35,19 @@ final class FileStore {
     // MARK: - Init
 
     init() {
+        if let saved = UserDefaults.standard.string(forKey: Self.activeRootKey),
+           let root = StorageRoot(rawValue: saved) {
+            activeRoot = root
+        } else {
+            activeRoot = .local
+        }
+
         iCloudMonitor.onUpdate = { [weak self] in
             try? await self?.loadTree()
+        }
+
+        if activeRoot == .iCloud {
+            iCloudMonitor.startMonitoring()
         }
     }
 
@@ -353,6 +366,7 @@ final class FileStore {
 
     func switchRoot(to root: StorageRoot) async throws {
         activeRoot = root
+        UserDefaults.standard.set(root.rawValue, forKey: Self.activeRootKey)
         expandedFolders.removeAll()
         rootChildren = []
 
