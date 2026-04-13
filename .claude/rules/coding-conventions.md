@@ -30,6 +30,7 @@
 - For custom inline title text, use `ToolbarItem(placement: .title)` paired with `.toolbarTitleDisplayMode(.inline)`
 - Views with keyboards must use `.background(Design.Colors.background.ignoresSafeArea())` — the shorthand `ShapeStyle` variant extends the background behind the keyboard without disrupting `safeAreaBar` layout, preventing the black window background from showing through the keyboard's rounded corners
 - All confirmations use sheets, not `confirmationDialog()`
+- For content-fitted sheets, use `FittedPresentationModifier` — it measures content height via `onGeometryChange` and applies a matching `.height()` detent. Sheet content must not use `maxHeight: .infinity` in its frame, or the measurement will be defeated.
 
 ## File System
 - Treat file `URL` as the source of truth for file identity — models hold `URL`, not `String` paths

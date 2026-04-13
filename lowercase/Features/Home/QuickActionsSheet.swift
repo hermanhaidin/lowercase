@@ -16,7 +16,7 @@ struct QuickActionsSheet: View {
         }
         .padding(.horizontal)
         .padding(.top, Design.Spacing.buttonMargin)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .frame(maxWidth: .infinity, alignment: .top)
     }
 }
 
@@ -93,7 +93,7 @@ private extension QuickActionsSheet {
             depth: 0
         )
     )
-    .presentationDetents([.medium])
+    .modifier(FittedPresentationModifier())
     .presentationBackground(Design.Colors.background)
 }
 
@@ -104,6 +104,6 @@ private extension QuickActionsSheet {
             depth: 0
         )
     )
-    .presentationDetents([.medium])
+    .modifier(FittedPresentationModifier())
     .presentationBackground(Design.Colors.background)
 }

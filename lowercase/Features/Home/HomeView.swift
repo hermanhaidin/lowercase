@@ -36,19 +36,19 @@ struct HomeView: View {
             }
             .sheet(isPresented: $showStorageSwitcher) {
                 StorageSwitcherSheet()
-                    .presentationDetents([.fraction(0.33)])
+                    .modifier(FittedPresentationModifier())
                     .presentationBackground(Design.Colors.background)
                     .presentationDragIndicator(.visible)
             }
             .sheet(isPresented: $showSortSheet) {
                 SortSheet()
-                    .presentationDetents([.medium])
+                    .modifier(FittedPresentationModifier())
                     .presentationBackground(Design.Colors.background)
                     .presentationDragIndicator(.visible)
             }
             .sheet(item: $quickActionTarget) { row in
                 QuickActionsSheet(row: row)
-                    .presentationDetents([.fraction(0.33)])
+                    .modifier(FittedPresentationModifier())
                     .presentationBackground(Design.Colors.background)
                     .presentationDragIndicator(.visible)
             }

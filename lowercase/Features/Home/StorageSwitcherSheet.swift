@@ -16,7 +16,7 @@ struct StorageSwitcherSheet: View {
         }
         .padding(.horizontal)
         .padding(.top, Design.Spacing.buttonMargin)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .frame(maxWidth: .infinity, alignment: .top)
     }
 }
 
@@ -89,7 +89,7 @@ private extension StorageSwitcherSheet {
 
 #Preview {
     StorageSwitcherSheet()
-        .presentationDetents([.height(160)])
+        .modifier(FittedPresentationModifier())
         .presentationBackground(Design.Colors.background)
         .environment(FileStore())
 }
