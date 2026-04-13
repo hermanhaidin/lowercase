@@ -5,7 +5,11 @@ struct HomeView: View {
     @State private var path: [HomeDestination] = []
     @State private var showStorageSwitcher = false
     @State private var showSortSheet = false
+    @State private var showAddNote = false
     @State private var quickActionTarget: FlatTreeRow?
+    @State private var moveTarget: FlatTreeRow?
+    @State private var pendingMoveTarget: FlatTreeRow?
+    @State private var createdNote: (url: URL, name: String)?
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -46,11 +50,29 @@ struct HomeView: View {
                     .presentationBackground(Design.Colors.background)
                     .presentationDragIndicator(.visible)
             }
-            .sheet(item: $quickActionTarget) { row in
-                QuickActionsSheet(row: row)
+            .sheet(item: $quickActionTarget, onDismiss: {
+                if let target = pendingMoveTarget {
+                    moveTarget = target
+                    pendingMoveTarget = nil
+                }
+            }) { row in
+                QuickActionsSheet(row: row, onMove: { pendingMoveTarget = $0 })
                     .modifier(FittedPresentationModifier())
                     .presentationBackground(Design.Colors.background)
                     .presentationDragIndicator(.visible)
+            }
+            .sheet(isPresented: $showAddNote, onDismiss: {
+                if let note = createdNote {
+                    path.append(.editor(url: note.url, name: note.name))
+                    createdNote = nil
+                }
+            }) {
+                FolderPickerSheet(mode: .addNote) { url, name in
+                    createdNote = (url, name)
+                }
+            }
+            .sheet(item: $moveTarget) { row in
+                FolderPickerSheet(mode: .move(url: row.id))
             }
             .navigationDestination(for: HomeDestination.self) { destination in
                 switch destination {
@@ -109,7 +131,7 @@ private extension HomeView {
     }
 
     func addNote() {
-        // No-op for Phase 3 — add note sheet will be built in a future phase
+        showAddNote = true
     }
 }
 

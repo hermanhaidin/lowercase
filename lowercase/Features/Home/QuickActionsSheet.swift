@@ -2,6 +2,7 @@ import SwiftUI
 
 struct QuickActionsSheet: View {
     let row: FlatTreeRow
+    var onMove: ((FlatTreeRow) -> Void)?
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -68,7 +69,10 @@ private extension QuickActionsSheet {
 
             sectionDivider
 
-            ActionRow(icon: .folderDependent, label: "Move to...") { dismiss() }
+            ActionRow(icon: .folderDependent, label: "Move to...") {
+                onMove?(row)
+                dismiss()
+            }
         }
     }
 
