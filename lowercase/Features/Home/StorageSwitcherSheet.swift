@@ -14,7 +14,7 @@ struct StorageSwitcherSheet: View {
                 rootRow(root)
             }
         }
-        .padding(.horizontal, Design.Spacing.contentMargin)
+        .padding(.horizontal)
         .padding(.top, Design.Spacing.buttonMargin)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
