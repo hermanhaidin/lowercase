@@ -6,18 +6,20 @@ final class FileStore {
     // MARK: - State
 
     var activeRoot: StorageRoot
-    private(set) var rootChildren: [FileNode] = []
+    private(set) var rootChildren: [FileNode] = [] {
+        didSet { rebuildFlatRows() }
+    }
     var sortOrder = SortOrder()
-    var expandedFolders: Set<URL> = []
+    var expandedFolders: Set<URL> = [] {
+        didSet { rebuildFlatRows() }
+    }
     var currentError: FileError?
 
     private static let activeRootKey = "activeRoot"
 
     // MARK: - Derived
 
-    var flatRows: [FlatTreeRow] {
-        flattenTree(rootChildren, depth: 0)
-    }
+    private(set) var flatRows: [FlatTreeRow] = []
 
     var isEmpty: Bool { rootChildren.isEmpty }
 
@@ -171,6 +173,10 @@ final class FileStore {
     }
 
     // MARK: - Flattening
+
+    private func rebuildFlatRows() {
+        flatRows = flattenTree(rootChildren, depth: 0)
+    }
 
     private func flattenTree(_ nodes: [FileNode], depth: Int) -> [FlatTreeRow] {
         var rows: [FlatTreeRow] = []
