@@ -25,7 +25,8 @@ struct FolderPickerSheet: View {
                     NewFolderRow(
                         name: $newFolderName,
                         isEditing: $isEditingNewFolder,
-                        isFocused: $isTextFieldFocused
+                        isFocused: $isTextFieldFocused,
+                        onSubmit: submitNewFolder
                     )
 
                     ForEach(folders, id: \.url) { folder in
@@ -93,6 +94,7 @@ private struct NewFolderRow: View {
     @Binding var name: String
     @Binding var isEditing: Bool
     var isFocused: FocusState<Bool>.Binding
+    var onSubmit: () -> Void
 
     var body: some View {
         Button {
@@ -120,6 +122,8 @@ private struct NewFolderRow: View {
                     .focused(isFocused)
                     .autocorrectionDisabled()
                     .textInputAutocapitalization(.never)
+                    .submitLabel(.done)
+                    .onSubmit(onSubmit)
                 } else {
                     Text("new folder")
                         .font(.geistPixel)
