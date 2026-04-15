@@ -269,7 +269,11 @@ private extension FolderPickerSheet {
 
     func submitNewFolder() {
         let trimmed = newFolderName.trimmingCharacters(in: .whitespaces)
-        guard !trimmed.isEmpty else { return }
+        guard !trimmed.isEmpty else {
+            isTextFieldFocused = false
+            withAnimation { isEditingNewFolder = false }
+            return
+        }
 
         isTextFieldFocused = false
 
