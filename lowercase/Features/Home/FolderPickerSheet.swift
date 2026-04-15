@@ -122,7 +122,6 @@ private struct NewFolderRow: View {
                     .focused(isFocused)
                     .autocorrectionDisabled()
                     .textInputAutocapitalization(.never)
-                    .submitLabel(.done)
                     .onSubmit(onSubmit)
                 } else {
                     Text("new folder")
