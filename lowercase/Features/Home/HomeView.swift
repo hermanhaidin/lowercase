@@ -106,6 +106,7 @@ private struct StorageSwitcherButton: View {
                     .frame(width: Design.Sizing.iconSize, height: Design.Sizing.iconSize)
                     .foregroundStyle(Design.Colors.tertiaryLabel)
             }
+            .padding(.leading, Design.Spacing.toolbarItemGap)
         }
         .accessibilityLabel("Switch storage, currently \(rootName)")
     }

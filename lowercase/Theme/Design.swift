@@ -30,6 +30,7 @@ enum Design {
         static let sectionGap: Double = 12
         static let treeIndent: Double = 16
         static let iconGap: Double = 8
+        static let toolbarItemGap: Double = 4
     }
 
     // MARK: - Sizing
