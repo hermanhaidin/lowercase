@@ -18,4 +18,14 @@ struct FlatTreeRow: Identifiable, Equatable {
         self.dateModified = node.dateModified
         self.hasChildren = !node.children.isEmpty
     }
+
+    init(noteURL: URL, name: String) {
+        self.id = noteURL
+        self.name = name
+        self.isFolder = false
+        self.depth = 0
+        self.dateCreated = .distantPast
+        self.dateModified = .distantPast
+        self.hasChildren = false
+    }
 }
