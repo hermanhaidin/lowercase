@@ -50,12 +50,14 @@ struct HomeView: View {
                 }
             }
             .safeAreaBar(edge: .bottom) {
-                HomeBottomBar(
-                    allExpanded: fileStore.allExpanded,
-                    onToggleExpansion: toggleExpansion,
-                    onSort: { showSortSheet = true },
-                    onAdd: addNote
-                )
+                if renameTarget == nil {
+                    HomeBottomBar(
+                        allExpanded: fileStore.allExpanded,
+                        onToggleExpansion: toggleExpansion,
+                        onSort: { showSortSheet = true },
+                        onAdd: addNote
+                    )
+                }
             }
             .sheet(isPresented: $showStorageSwitcher) {
                 StorageSwitcherSheet()
