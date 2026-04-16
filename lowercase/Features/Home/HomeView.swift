@@ -9,7 +9,12 @@ struct HomeView: View {
     @State private var quickActionTarget: FlatTreeRow?
     @State private var moveTarget: FlatTreeRow?
     @State private var pendingMoveTarget: FlatTreeRow?
+    @State private var renameTarget: FlatTreeRow?
+    @State private var pendingRenameTarget: FlatTreeRow?
+    @State private var renameDraft = ""
+    @FocusState private var isRenameFocused: Bool
     @State private var createdNote: (url: URL, name: String)?
+    @Namespace private var namespace
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -18,16 +23,30 @@ struct HomeView: View {
                     HomeEmptyView()
                 } else {
                     FolderTreeView(
+                        renameTarget: $renameTarget,
+                        renameDraft: $renameDraft,
+                        renameFocused: $isRenameFocused,
+                        onRenameSubmit: submitRename,
                         onQuickAction: { quickActionTarget = $0 },
                         onTapFile: { path.append(.editor(url: $0.id, name: $0.name)) }
                     )
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Design.Colors.background)
+            .background(Design.Colors.background.ignoresSafeArea())
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    storageSwitcherButton
+                    if renameTarget == nil {
+                        storageSwitcherButton
+                            .glassEffectID("leadingAction", in: namespace)
+                    }
+                }
+
+                ToolbarItem(placement: .topBarTrailing) {
+                    if renameTarget != nil {
+                        doneRenameButton
+                            .glassEffectID("trailingAction", in: namespace)
+                    }
                 }
             }
             .safeAreaBar(edge: .bottom) {
@@ -55,8 +74,19 @@ struct HomeView: View {
                     moveTarget = target
                     pendingMoveTarget = nil
                 }
+                if let target = pendingRenameTarget {
+                    renameDraft = target.name
+                    withAnimation {
+                        renameTarget = target
+                    }
+                    pendingRenameTarget = nil
+                }
             }) { row in
-                QuickActionsSheet(row: row, onMove: { pendingMoveTarget = $0 })
+                QuickActionsSheet(
+                    row: row,
+                    onRename: { pendingRenameTarget = $0 },
+                    onMove: { pendingMoveTarget = $0 }
+                )
                     .modifier(FittedPresentationModifier())
                     .presentationBackground(Design.Colors.background)
                     .presentationDragIndicator(.visible)
@@ -121,6 +151,16 @@ private extension HomeView {
         }
     }
 
+    var doneRenameButton: some View {
+        Button(action: submitRename) {
+            Text("Done")
+                .font(.geistPixel)
+                .foregroundStyle(Design.Colors.label)
+        }
+        .buttonStyle(.glassProminent)
+        .tint(Design.Colors.glassTint)
+    }
+
     func toggleExpansion() {
         withAnimation {
             if fileStore.allExpanded {
@@ -133,6 +173,34 @@ private extension HomeView {
 
     func addNote() {
         showAddNote = true
+    }
+
+    func submitRename() {
+        guard let target = renameTarget else { return }
+        let trimmed = renameDraft.trimmingCharacters(in: .whitespaces)
+
+        guard !trimmed.isEmpty, trimmed != target.name else {
+            isRenameFocused = false
+            withAnimation {
+                renameTarget = nil
+                renameDraft = ""
+            }
+            return
+        }
+
+        isRenameFocused = false
+
+        Task {
+            do {
+                try await fileStore.rename(at: target.id, to: trimmed)
+            } catch let error as FileError {
+                fileStore.currentError = error
+            } catch {}
+            withAnimation {
+                renameTarget = nil
+                renameDraft = ""
+            }
+        }
     }
 }
 

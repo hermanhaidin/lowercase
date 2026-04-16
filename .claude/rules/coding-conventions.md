@@ -25,7 +25,11 @@
 ## Toolbar & Keyboard
 - For bottom bars, use `safeAreaBar(edge: .bottom)` instead of `ToolbarItem(placement: .bottomBar)`
 - For keyboard accessories, use `safeAreaInset(edge: .bottom)` instead of `ToolbarItem(placement: .keyboard)` — the latter offers no control over spacing, padding, or sizing
-- When a `TextField` needs programmatic focus inside a `ToolbarItem`, use a `UIViewRepresentable` wrapping `UITextField` with `becomeFirstResponder()` — `@FocusState` is broken in toolbar placements (unfixed through iOS 26)
+- When a `TextField` needs programmatic focus inside a `ToolbarItem`, use a `UIViewRepresentable` wrapping `UITextField` — `@FocusState` is broken in toolbar placements (unfixed through iOS 26). Key requirements for toolbar `UIViewRepresentable`:
+  - Keep it always present and toggle `isUserInteractionEnabled` — never conditionally swap between `Text` and a `UIViewRepresentable`, as SwiftUI animates the swap with a layout bounce from (0,0)
+  - Subclass `UITextField` to override `intrinsicContentSize` based on actual text width — without this the field gets an incorrect frame
+  - Apply `.id(verticalSizeClass)` so the view is recreated with a fresh layout on rotation — SwiftUI caches the hosting-view frame from the initial toolbar layout
+  - Manage focus via a `@Binding var isFocused: Bool` with a cancellable `Task` in the coordinator, not `DispatchQueue.main.async`
 - Custom back button icon is set globally via `UINavigationBar.appearance().backIndicatorImage` in the App `init()` — never hide the system back button to replace it with a custom one, as this breaks the native swipe-back gesture and Liquid Glass styling
 - For custom inline title text, use `ToolbarItem(placement: .title)` paired with `.toolbarTitleDisplayMode(.inline)`
 - Views with keyboards must use `.background(Design.Colors.background.ignoresSafeArea())` — the shorthand `ShapeStyle` variant extends the background behind the keyboard without disrupting `safeAreaBar` layout, preventing the black window background from showing through the keyboard's rounded corners
@@ -42,6 +46,7 @@
 
 ## Gestures
 - `.onLongPressGesture` on a `Button` is swallowed by the button's tap recognizer — use `.simultaneousGesture(LongPressGesture().onEnded { })` instead
+- Plain `var` properties on child views may not trigger re-evaluation of `LazyVStack` content — use `@Binding` to create a proper reactive dependency when the parent's state needs to drive conditional rendering inside a lazy container
 
 ## Swift Style
 - Prefer `if let value {` shorthand

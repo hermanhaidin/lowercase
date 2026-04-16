@@ -31,7 +31,7 @@ struct TreeRowView: View {
 
 // MARK: - Subviews
 
-private struct FolderIconGroup: View {
+struct FolderIconGroup: View {
     let depth: Int
     let isExpanded: Bool
 
@@ -59,7 +59,7 @@ private struct FolderIconGroup: View {
     }
 }
 
-private struct FileIconGroup: View {
+struct FileIconGroup: View {
     let depth: Int
 
     var body: some View {

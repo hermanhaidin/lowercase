@@ -2,6 +2,7 @@ import SwiftUI
 
 struct QuickActionsSheet: View {
     let row: FlatTreeRow
+    var onRename: ((FlatTreeRow) -> Void)?
     var onMove: ((FlatTreeRow) -> Void)?
     @Environment(\.dismiss) private var dismiss
 
@@ -65,7 +66,10 @@ private extension QuickActionsSheet {
 
     var editSection: some View {
         SectionCard {
-            ActionRow(icon: .pencilEdit, label: "Rename") { dismiss() }
+            ActionRow(icon: .pencilEdit, label: "Rename") {
+                onRename?(row)
+                dismiss()
+            }
 
             sectionDivider
 
