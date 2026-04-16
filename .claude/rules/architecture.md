@@ -29,7 +29,13 @@ lowercase/
 
 **SortCriterion** — Enum: `.name`, `.modified`, `.created`. Each case has a `defaultAscending` (name = true, dates = false).
 
-**FileError** — LocalizedError enum covering `rootUnavailable`, `alreadyExists`, `invalidMove`, `notFound`, `readFailed`, `writeFailed`. Thrown by FileStore, surfaced via `currentError`.
+**FileError** — LocalizedError enum thrown by FileStore, surfaced via `currentError`. Cases with associated values:
+- `rootUnavailable`
+- `alreadyExists(String)` — item name
+- `invalidMove(String)` — reason
+- `notFound(URL)` — file URL
+- `readFailed(URL, underlying: Error)`
+- `writeFailed(URL, underlying: Error)`
 
 ## Services
 
@@ -40,6 +46,10 @@ lowercase/
 - Sorting always puts folders before notes, then sorts each group by current `SortOrder`
 - CRUD: `createNote(in:)`, `createFolder(named:in:)`, `readNote(at:)`, `writeNote(_:to:)`, `trashItem(at:)`, `rename(at:to:)`, `moveItem(at:to:)`
 - `allFolders(excluding:)` returns a flat list with depth for destination pickers
+- `resolveRootURL()` — async, resolves active root URL (local path or iCloud container)
+- `switchRoot(to:)` — switches active root, persists to UserDefaults, clears state, manages iCloud monitor, reloads tree
+- `resort()` — re-sorts existing tree in memory without reloading from disk
+- `toggleExpansion(for:)`, `expandAll()`, `collapseAll()` — folder expansion state
 - All I/O wrapped in `NSFileCoordinator` via private `coordinated*` methods
 - Owns `ICloudMonitor`; starts/stops monitoring on root switch
 
@@ -59,5 +69,7 @@ StorageRoot → FileStore.loadTree() → scans directory → [FileNode] tree
   → sortNodes() → folders first, then notes, by SortOrder
   → flattenTree() → [FlatTreeRow] using expandedFolders set → UI
 
+Sort order changes → resort() → re-sorts existing tree in memory → flatRows rebuild
+switchRoot(to:) → persists choice → clears state → starts/stops iCloud monitor → loadTree()
 ICloudMonitor detects changes → triggers loadTree() → tree refreshes
 ```
