@@ -35,6 +35,7 @@ struct FolderTreeView: View {
                 }
             }
             .scrollDismissesKeyboard(.interactively)
+            .scrollEdgeEffectHidden(renameTarget != nil, for: .bottom)
             .onChange(of: renameTarget?.id) { _, newValue in
                 if let id = newValue {
                     withAnimation {

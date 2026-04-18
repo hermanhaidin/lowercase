@@ -2,7 +2,6 @@ import SwiftUI
 
 struct EditorView: View {
     @Environment(FileStore.self) private var fileStore
-    @Environment(\.verticalSizeClass) private var verticalSizeClass
     @State private var fileURL: URL
     @State private var fileName: String
 
@@ -40,7 +39,6 @@ struct EditorView: View {
                         isEditable: isRenaming,
                         onSubmit: submitRename
                     )
-                    .id(verticalSizeClass)
                 }
 
                 ToolbarItem(placement: .topBarTrailing) {
@@ -61,8 +59,8 @@ struct EditorView: View {
                 if pendingRename {
                     pendingRename = false
                     renameDraft = fileName
-                    isRenaming = true
                     withAnimation {
+                        isRenaming = true
                         showDoneButton = true
                     }
                     isTitleFieldFocused = true
