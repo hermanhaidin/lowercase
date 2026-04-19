@@ -59,10 +59,7 @@ struct EditorView: View {
                 if pendingRename {
                     pendingRename = false
                     renameDraft = fileName
-                    withAnimation {
-                        isRenaming = true
-                        showDoneButton = true
-                    }
+                    isRenaming = true
                     isTitleFieldFocused = true
                 }
             }) { row in
@@ -79,7 +76,11 @@ struct EditorView: View {
                 FolderPickerSheet(mode: .move(url: row.id))
             }
             .onChange(of: isTitleFieldFocused) { _, focused in
-                if !focused, isRenaming {
+                if focused, isRenaming, !showDoneButton {
+                    withAnimation {
+                        showDoneButton = true
+                    }
+                } else if !focused, isRenaming {
                     submitRename()
                 }
             }
