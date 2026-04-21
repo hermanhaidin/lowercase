@@ -26,6 +26,11 @@ final class EditorAutosaver {
         }
     }
 
+    func cancelPending() {
+        pendingTask?.cancel()
+        pendingTask = nil
+    }
+
     private func performSave(content: String, to url: URL, using store: FileStore) async {
         guard content != lastSavedContent else { return }
         do {

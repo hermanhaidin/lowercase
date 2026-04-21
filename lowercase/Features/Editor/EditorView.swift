@@ -9,7 +9,8 @@ struct EditorView: View {
     @State private var content: String = ""
     @State private var isContentLoaded = false
     @State private var isEditorFocused = false
-    @State private var autoFocusOnAppear: Bool
+    @State private var wasJustCreated: Bool
+    @State private var initialFileName: String
     @State private var autosaver = EditorAutosaver()
 
     @State private var quickActionTarget: FlatTreeRow?
@@ -25,11 +26,12 @@ struct EditorView: View {
 
     @Namespace private var namespace
 
-    init(fileURL: URL, fileName: String, autoFocusOnAppear: Bool = false) {
+    init(fileURL: URL, fileName: String, wasJustCreated: Bool = false) {
         _fileURL = State(initialValue: fileURL)
         _fileName = State(initialValue: fileName)
         _renameDraft = State(initialValue: fileName)
-        _autoFocusOnAppear = State(initialValue: autoFocusOnAppear)
+        _wasJustCreated = State(initialValue: wasJustCreated)
+        _initialFileName = State(initialValue: fileName)
     }
 
     var body: some View {
@@ -106,9 +108,7 @@ struct EditorView: View {
                     autosaver.flushImmediate(content: content, to: fileURL, using: fileStore)
                 }
             }
-            .onDisappear {
-                autosaver.flushImmediate(content: content, to: fileURL, using: fileStore)
-            }
+            .onDisappear(perform: handleDisappear)
     }
 }
 
@@ -142,13 +142,25 @@ private extension EditorView {
         .tint(Design.Colors.glassTint)
     }
 
+    func handleDisappear() {
+        let trimmed = content.trimmingCharacters(in: .whitespacesAndNewlines)
+        let wasRenamed = fileName != initialFileName
+        if wasJustCreated, trimmed.isEmpty, !wasRenamed {
+            autosaver.cancelPending()
+            let url = fileURL
+            Task { try? await fileStore.trashItem(at: url) }
+        } else {
+            autosaver.flushImmediate(content: content, to: fileURL, using: fileStore)
+        }
+    }
+
     func loadNote() async {
         do {
             let loaded = try await fileStore.readNote(at: fileURL)
             autosaver.markLoaded(loaded)
             content = loaded
             isContentLoaded = true
-            if autoFocusOnAppear { isEditorFocused = true }
+            if wasJustCreated { isEditorFocused = true }
         } catch let error as FileError {
             fileStore.currentError = error
         } catch { }

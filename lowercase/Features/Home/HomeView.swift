@@ -28,7 +28,7 @@ struct HomeView: View {
                         renameFocused: $isRenameFocused,
                         onRenameSubmit: submitRename,
                         onQuickAction: { quickActionTarget = $0 },
-                        onTapFile: { path.append(.editor(url: $0.id, name: $0.name, autoFocus: false)) }
+                        onTapFile: { path.append(.editor(url: $0.id, name: $0.name, wasJustCreated: false)) }
                     )
                 }
             }
@@ -95,7 +95,7 @@ struct HomeView: View {
             }
             .sheet(isPresented: $showAddNote, onDismiss: {
                 if let note = createdNote {
-                    path.append(.editor(url: note.url, name: note.name, autoFocus: note.isNew))
+                    path.append(.editor(url: note.url, name: note.name, wasJustCreated: note.isNew))
                     createdNote = nil
                 }
             }) {
@@ -108,8 +108,8 @@ struct HomeView: View {
             }
             .navigationDestination(for: HomeDestination.self) { destination in
                 switch destination {
-                case .editor(let url, let name, let autoFocus):
-                    EditorView(fileURL: url, fileName: name, autoFocusOnAppear: autoFocus)
+                case .editor(let url, let name, let wasJustCreated):
+                    EditorView(fileURL: url, fileName: name, wasJustCreated: wasJustCreated)
                 }
             }
             .task {
