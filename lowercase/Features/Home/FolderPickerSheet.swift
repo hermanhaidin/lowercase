@@ -7,7 +7,7 @@ enum FolderPickerMode {
 
 struct FolderPickerSheet: View {
     let mode: FolderPickerMode
-    var onNoteCreated: ((URL, String) -> Void)?
+    var onNoteCreated: ((URL, String, Bool) -> Void)?
 
     @Environment(FileStore.self) private var fileStore
     @Environment(\.dismiss) private var dismiss
@@ -232,9 +232,9 @@ private extension FolderPickerSheet {
             do {
                 switch mode {
                 case .addNote:
-                    let url = try await fileStore.createNote(in: nil)
-                    let name = url.deletingPathExtension().lastPathComponent
-                    onNoteCreated?(url, name)
+                    let result = try await fileStore.createNote(in: nil)
+                    let name = result.url.deletingPathExtension().lastPathComponent
+                    onNoteCreated?(result.url, name, result.isNew)
                 case .move(let sourceURL):
                     guard let root = await fileStore.resolveRootURL() else {
                         fileStore.currentError = .rootUnavailable
@@ -254,9 +254,9 @@ private extension FolderPickerSheet {
             do {
                 switch mode {
                 case .addNote:
-                    let url = try await fileStore.createNote(in: folderURL)
-                    let name = url.deletingPathExtension().lastPathComponent
-                    onNoteCreated?(url, name)
+                    let result = try await fileStore.createNote(in: folderURL)
+                    let name = result.url.deletingPathExtension().lastPathComponent
+                    onNoteCreated?(result.url, name, result.isNew)
                 case .move(let sourceURL):
                     try await fileStore.moveItem(at: sourceURL, to: folderURL)
                 }
@@ -283,9 +283,9 @@ private extension FolderPickerSheet {
 
                 switch mode {
                 case .addNote:
-                    let url = try await fileStore.createNote(in: folderURL)
-                    let name = url.deletingPathExtension().lastPathComponent
-                    onNoteCreated?(url, name)
+                    let result = try await fileStore.createNote(in: folderURL)
+                    let name = result.url.deletingPathExtension().lastPathComponent
+                    onNoteCreated?(result.url, name, result.isNew)
                 case .move(let sourceURL):
                     try await fileStore.moveItem(at: sourceURL, to: folderURL)
                 }

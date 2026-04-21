@@ -227,9 +227,10 @@ final class FileStore {
     // MARK: - Create Note
 
     /// Creates a new note in the specified folder (or root if nil).
-    /// For daily folders, returns the existing daily note URL if one exists for today.
+    /// For daily folders, returns the existing daily note URL if one exists for today;
+    /// `isNew` is false in that case and true when a file was actually created.
     @discardableResult
-    func createNote(in folderURL: URL? = nil) async throws -> URL {
+    func createNote(in folderURL: URL? = nil) async throws -> (url: URL, isNew: Bool) {
         guard let root = await resolveRootURL() else {
             throw FileError.rootUnavailable
         }
@@ -237,10 +238,9 @@ final class FileStore {
         let parent = folderURL ?? root
         ensureDirectoryExists(at: parent)
 
-        // For daily folders, return existing note if today's already exists
         let folderName = parent.lastPathComponent.lowercased()
         if folderName.contains("daily"), let existing = NoteNamer.dailyNoteExists(in: parent) {
-            return existing
+            return (existing, false)
         }
 
         let name = NoteNamer.nextName(in: parent)
@@ -250,7 +250,7 @@ final class FileStore {
         try await coordinatedWrite(data: data, to: noteURL)
 
         try await loadTree()
-        return noteURL
+        return (noteURL, true)
     }
 
     // MARK: - Create Folder

@@ -9,6 +9,7 @@ struct EditorView: View {
     @State private var content: String = ""
     @State private var isContentLoaded = false
     @State private var isEditorFocused = false
+    @State private var autoFocusOnAppear: Bool
     @State private var autosaver = EditorAutosaver()
 
     @State private var quickActionTarget: FlatTreeRow?
@@ -24,10 +25,11 @@ struct EditorView: View {
 
     @Namespace private var namespace
 
-    init(fileURL: URL, fileName: String) {
+    init(fileURL: URL, fileName: String, autoFocusOnAppear: Bool = false) {
         _fileURL = State(initialValue: fileURL)
         _fileName = State(initialValue: fileName)
         _renameDraft = State(initialValue: fileName)
+        _autoFocusOnAppear = State(initialValue: autoFocusOnAppear)
     }
 
     var body: some View {
@@ -146,7 +148,7 @@ private extension EditorView {
             autosaver.markLoaded(loaded)
             content = loaded
             isContentLoaded = true
-            if loaded.isEmpty { isEditorFocused = true }
+            if autoFocusOnAppear { isEditorFocused = true }
         } catch let error as FileError {
             fileStore.currentError = error
         } catch { }

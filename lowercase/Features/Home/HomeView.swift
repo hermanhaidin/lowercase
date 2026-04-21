@@ -13,7 +13,7 @@ struct HomeView: View {
     @State private var pendingRenameTarget: FlatTreeRow?
     @State private var renameDraft = ""
     @FocusState private var isRenameFocused: Bool
-    @State private var createdNote: (url: URL, name: String)?
+    @State private var createdNote: (url: URL, name: String, isNew: Bool)?
     @Namespace private var namespace
 
     var body: some View {
@@ -28,7 +28,7 @@ struct HomeView: View {
                         renameFocused: $isRenameFocused,
                         onRenameSubmit: submitRename,
                         onQuickAction: { quickActionTarget = $0 },
-                        onTapFile: { path.append(.editor(url: $0.id, name: $0.name)) }
+                        onTapFile: { path.append(.editor(url: $0.id, name: $0.name, autoFocus: false)) }
                     )
                 }
             }
@@ -95,12 +95,12 @@ struct HomeView: View {
             }
             .sheet(isPresented: $showAddNote, onDismiss: {
                 if let note = createdNote {
-                    path.append(.editor(url: note.url, name: note.name))
+                    path.append(.editor(url: note.url, name: note.name, autoFocus: note.isNew))
                     createdNote = nil
                 }
             }) {
-                FolderPickerSheet(mode: .addNote) { url, name in
-                    createdNote = (url, name)
+                FolderPickerSheet(mode: .addNote) { url, name, isNew in
+                    createdNote = (url, name, isNew)
                 }
             }
             .sheet(item: $moveTarget) { row in
@@ -108,8 +108,8 @@ struct HomeView: View {
             }
             .navigationDestination(for: HomeDestination.self) { destination in
                 switch destination {
-                case .editor(let url, let name):
-                    EditorView(fileURL: url, fileName: name)
+                case .editor(let url, let name, let autoFocus):
+                    EditorView(fileURL: url, fileName: name, autoFocusOnAppear: autoFocus)
                 }
             }
             .task {

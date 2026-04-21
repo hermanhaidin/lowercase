@@ -44,7 +44,7 @@ lowercase/
 - `flatRows` is computed from the tree + expansion state
 - `loadTree()` scans the active root recursively, filtering for `.md` files and directories only
 - Sorting always puts folders before notes, then sorts each group by current `SortOrder`
-- CRUD: `createNote(in:)`, `createFolder(named:in:)`, `readNote(at:)`, `writeNote(_:to:)`, `trashItem(at:)`, `rename(at:to:)`, `moveItem(at:to:)`
+- CRUD: `createNote(in:)` returns `(url, isNew)` (isNew is false when a daily folder already has today's note), `createFolder(named:in:)`, `readNote(at:)`, `writeNote(_:to:)`, `trashItem(at:)`, `rename(at:to:)`, `moveItem(at:to:)`
 - `allFolders(excluding:)` returns a flat list with depth for destination pickers
 - `resolveRootURL()` — async, resolves active root URL (local path or iCloud container)
 - `switchRoot(to:)` — switches active root, persists to UserDefaults, clears state, manages iCloud monitor, reloads tree
