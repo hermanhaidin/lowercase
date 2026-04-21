@@ -2,8 +2,14 @@ import SwiftUI
 
 struct EditorView: View {
     @Environment(FileStore.self) private var fileStore
+    @Environment(\.scenePhase) private var scenePhase
     @State private var fileURL: URL
     @State private var fileName: String
+
+    @State private var content: String = ""
+    @State private var isContentLoaded = false
+    @State private var isEditorFocused = false
+    @State private var autosaver = EditorAutosaver()
 
     @State private var quickActionTarget: FlatTreeRow?
     @State private var moveTarget: FlatTreeRow?
@@ -25,9 +31,14 @@ struct EditorView: View {
     }
 
     var body: some View {
-        Text("Editor placeholder")
-            .font(.geistPixel)
-            .foregroundStyle(Design.Colors.secondaryLabel)
+        MarkdownTextView(
+            text: $content,
+            isFocused: $isEditorFocused,
+            onChange: { newValue in
+                autosaver.scheduleSave(content: newValue, to: fileURL, using: fileStore)
+            }
+        )
+            .opacity(isContentLoaded ? 1 : 0)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Design.Colors.background.ignoresSafeArea())
             .toolbarTitleDisplayMode(.inline)
@@ -84,6 +95,18 @@ struct EditorView: View {
                     submitRename()
                 }
             }
+            .onChange(of: isRenaming) { _, renaming in
+                if renaming { isEditorFocused = false }
+            }
+            .task(id: fileURL) { await loadNote() }
+            .onChange(of: scenePhase) { _, phase in
+                if phase == .background || phase == .inactive {
+                    autosaver.flushImmediate(content: content, to: fileURL, using: fileStore)
+                }
+            }
+            .onDisappear {
+                autosaver.flushImmediate(content: content, to: fileURL, using: fileStore)
+            }
     }
 }
 
@@ -115,6 +138,18 @@ private extension EditorView {
         }
         .buttonStyle(.glassProminent)
         .tint(Design.Colors.glassTint)
+    }
+
+    func loadNote() async {
+        do {
+            let loaded = try await fileStore.readNote(at: fileURL)
+            autosaver.markLoaded(loaded)
+            content = loaded
+            isContentLoaded = true
+            if loaded.isEmpty { isEditorFocused = true }
+        } catch let error as FileError {
+            fileStore.currentError = error
+        } catch { }
     }
 
     func submitRename() {
