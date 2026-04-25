@@ -21,6 +21,12 @@ struct MarkdownTextView: UIViewRepresentable {
         return view
     }
 
+    func sizeThatFits(_ proposal: ProposedViewSize, uiView: MarkdownUITextView, context: Context) -> CGSize? {
+        guard let width = proposal.width else { return nil }
+        let height = uiView.sizeThatFits(CGSize(width: width, height: .greatestFiniteMagnitude)).height
+        return CGSize(width: width, height: height)
+    }
+
     func updateUIView(_ uiView: MarkdownUITextView, context: Context) {
         context.coordinator.parent = self
 
@@ -42,6 +48,7 @@ struct MarkdownTextView: UIViewRepresentable {
     final class Coordinator: NSObject, UITextViewDelegate {
         var parent: MarkdownTextView
         var focusTask: Task<Void, Never>?
+        var caretTask: Task<Void, Never>?
         private var isApplyingExternal = false
 
         init(parent: MarkdownTextView) {
@@ -61,15 +68,22 @@ struct MarkdownTextView: UIViewRepresentable {
             let clampedLocation = min(prev.location, newLen)
             let clampedLength = min(prev.length, newLen - clampedLocation)
             view.selectedRange = NSRange(location: clampedLocation, length: clampedLength)
+
+            view.invalidateIntrinsicContentSize()
         }
 
         func textViewDidChange(_ textView: UITextView) {
+            textView.invalidateIntrinsicContentSize()
             guard !isApplyingExternal else { return }
             let newText = textView.text ?? ""
             if parent.text != newText {
                 parent.text = newText
                 parent.onChange(newText)
             }
+        }
+
+        func textViewDidChangeSelection(_ textView: UITextView) {
+            scrollCaretToVisible(in: textView)
         }
 
         func textViewDidBeginEditing(_ textView: UITextView) {
@@ -81,6 +95,33 @@ struct MarkdownTextView: UIViewRepresentable {
         func textViewDidEndEditing(_ textView: UITextView) {
             if parent.isFocused {
                 parent.isFocused = false
+            }
+        }
+
+        private func scrollCaretToVisible(in textView: UITextView) {
+            guard let selection = textView.selectedTextRange else { return }
+            let caret = textView.caretRect(for: selection.end)
+            guard !caret.isNull, !caret.isEmpty else { return }
+
+            guard let parentView = textView.superview,
+                  let scrollView = sequence(first: parentView, next: \.superview)
+                    .compactMap({ $0 as? UIScrollView })
+                    .first else { return }
+
+            let caretInScroll = textView.convert(caret, to: scrollView)
+            let visibleTop = scrollView.contentOffset.y + scrollView.adjustedContentInset.top
+            let visibleBottom = scrollView.contentOffset.y + scrollView.bounds.height - scrollView.adjustedContentInset.bottom
+
+            guard caretInScroll.minY < visibleTop
+                    || caretInScroll.maxY > visibleBottom else { return }
+
+            let target = caretInScroll.insetBy(dx: 0, dy: -24)
+
+            caretTask?.cancel()
+            caretTask = Task { @MainActor [weak scrollView] in
+                await Task.yield()
+                guard !Task.isCancelled, let scrollView else { return }
+                scrollView.scrollRectToVisible(target, animated: false)
             }
         }
     }

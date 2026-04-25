@@ -25,7 +25,7 @@ final class MarkdownUITextView: UITextView {
         tintColor = UIColor(Design.Colors.accent)
         font = UIFont(name: "GeistPixel-Square", size: 17) ?? .systemFont(ofSize: 17)
         textContainerInset = UIEdgeInsets(top: 16, left: 20, bottom: 16, right: 20)
-        alwaysBounceVertical = true
+        isScrollEnabled = false
         keyboardAppearance = .dark
         dataDetectorTypes = []
         autocapitalizationType = .none

@@ -35,14 +35,18 @@ struct EditorView: View {
     }
 
     var body: some View {
-        MarkdownTextView(
-            text: $content,
-            isFocused: $isEditorFocused,
-            onChange: { newValue in
-                autosaver.scheduleSave(content: newValue, to: fileURL, using: fileStore)
-            }
-        )
+        ScrollView {
+            MarkdownTextView(
+                text: $content,
+                isFocused: $isEditorFocused,
+                onChange: { newValue in
+                    autosaver.scheduleSave(content: newValue, to: fileURL, using: fileStore)
+                }
+            )
+            .frame(maxWidth: .infinity)
+        }
             .opacity(isContentLoaded ? 1 : 0)
+            .scrollDismissesKeyboard(.interactively)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Design.Colors.background.ignoresSafeArea())
             .toolbarTitleDisplayMode(.inline)
