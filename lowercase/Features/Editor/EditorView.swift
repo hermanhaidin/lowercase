@@ -12,6 +12,7 @@ struct EditorView: View {
     @State private var wasJustCreated: Bool
     @State private var initialFileName: String
     @State private var autosaver = EditorAutosaver()
+    @State private var controller = EditorController()
 
     @State private var quickActionTarget: FlatTreeRow?
     @State private var moveTarget: FlatTreeRow?
@@ -39,6 +40,7 @@ struct EditorView: View {
             MarkdownTextView(
                 text: $content,
                 isFocused: $isEditorFocused,
+                controller: controller,
                 onChange: { newValue in
                     autosaver.scheduleSave(content: newValue, to: fileURL, using: fileStore)
                 }
@@ -70,6 +72,16 @@ struct EditorView: View {
                     }
                 }
             }
+            .safeAreaInset(edge: .bottom) {
+                if isEditorFocused {
+                    EditorMarkdownToolbar(
+                        onAction: controller.apply,
+                        onHideKeyboard: { isEditorFocused = false }
+                    )
+                    .transition(.opacity)
+                }
+            }
+            .animation(.smooth, value: isEditorFocused)
             .sheet(item: $quickActionTarget, onDismiss: {
                 if let target = pendingMoveTarget {
                     moveTarget = target

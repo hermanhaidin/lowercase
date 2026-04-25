@@ -3,6 +3,7 @@ import SwiftUI
 struct MarkdownTextView: UIViewRepresentable {
     @Binding var text: String
     @Binding var isFocused: Bool
+    let controller: EditorController
     var onChange: (String) -> Void
 
     func makeCoordinator() -> Coordinator {
@@ -18,7 +19,12 @@ struct MarkdownTextView: UIViewRepresentable {
             context.coordinator.applyExternalText(text, to: view)
         }
 
+        controller.textView = view
         return view
+    }
+
+    static func dismantleUIView(_ uiView: MarkdownUITextView, coordinator: Coordinator) {
+        coordinator.parent.controller.textView = nil
     }
 
     func sizeThatFits(_ proposal: ProposedViewSize, uiView: MarkdownUITextView, context: Context) -> CGSize? {
